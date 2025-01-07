@@ -27,6 +27,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -213,7 +214,7 @@ namespace meld {
       if (stores_.size() > 0ull) {
         spdlog::warn("Unfold {} has {} cached stores.", full_name(), stores_.size());
       }
-      for (auto const& [_, store] : stores_) {
+      for (auto const& store : stores_ | std::views::values) {
         spdlog::debug(" => ID: ", store->id()->to_string());
       }
     }

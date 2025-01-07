@@ -5,6 +5,7 @@
 #include "spdlog/spdlog.h"
 
 #include <algorithm>
+#include <ranges>
 #include <stdexcept>
 
 using namespace std::chrono;
@@ -86,15 +87,13 @@ namespace meld {
     auto start_time = steady_clock::now();
 
     if (store->is_flush()) {
-      for (auto const& [_, head_ports] : head_ports_) {
-        for (auto const& head_port : head_ports) {
-          head_port.port->try_put(msg);
-        }
+      for (auto const& head_port : head_ports_ | std::views::values | std::views::join) {
+        head_port.port->try_put(msg);
       }
       return {};
     }
 
-    for (auto const& [node_name, ports] : head_ports_) {
+    for (auto const& ports : head_ports_ | std::views::values) {
       // FIXME: Should make sure that the received store has a level equal to the most
       //        derived store required by the algorithm.
       auto const senders = senders_for(store, ports);

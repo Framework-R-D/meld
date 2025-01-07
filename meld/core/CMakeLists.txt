@@ -23,6 +23,13 @@ add_library(meld_core SHARED
   store_counters.cpp
   )
 target_include_directories(meld_core PRIVATE ${PROJECT_SOURCE_DIR})
+
+# AppleClang 15.0 still treats std::views::join as experimental
+if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" AND
+    CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "14.5")
+  target_compile_options(meld_core PRIVATE "-fexperimental-library")
+endif()
+
 target_link_libraries(meld_core
   PRIVATE
     TBB::tbb

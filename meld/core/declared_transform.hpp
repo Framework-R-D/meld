@@ -236,7 +236,7 @@ namespace meld {
     std::size_t product_count() const final
     {
       std::size_t result{};
-      for (auto const& [_, count] : product_count_) {
+      for (auto const& count : product_count_ | std::views::values) {
         result += count.load();
       }
       return result;

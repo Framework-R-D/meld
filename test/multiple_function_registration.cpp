@@ -5,6 +5,7 @@
 #include "catch2/catch_all.hpp"
 
 #include <algorithm>
+#include <numeric>
 #include <vector>
 
 using namespace meld;
@@ -13,7 +14,7 @@ namespace {
   auto square_numbers(std::vector<unsigned> const& numbers)
   {
     std::vector<unsigned> result(size(numbers));
-    transform(begin(numbers), end(numbers), begin(result), [](unsigned i) { return i * i; });
+    std::transform(begin(numbers), end(numbers), begin(result), [](unsigned i) { return i * i; });
     return result;
   }
 
@@ -21,7 +22,7 @@ namespace {
   {
     std::vector<unsigned> const expected_squared_numbers{0, 1, 4, 9, 16};
     CHECK(squared_numbers == expected_squared_numbers);
-    return accumulate(begin(squared_numbers), end(squared_numbers), 0u);
+    return std::accumulate(begin(squared_numbers), end(squared_numbers), 0u);
   }
 
   double sqrt_sum_numbers(unsigned summed_numbers, unsigned offset)
