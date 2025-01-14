@@ -102,9 +102,8 @@ namespace meld {
   {
     // Must be called after an insertion has already been performed
     counter_accessor ca;
-    bool const found [[maybe_unused]] = counters_.find(ca, hash);
-    assert(found);
-    if (ca->second->is_complete()) {
+    bool const found = counters_.find(ca, hash);
+    if (found and ca->second->is_complete()) {
       std::unique_ptr<store_counter> result{std::move(ca->second)};
       counters_.erase(ca);
       return result;
