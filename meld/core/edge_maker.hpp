@@ -6,8 +6,11 @@
 #include "meld/core/dot/attributes.hpp"
 #include "meld/core/dot/data_graph.hpp"
 #include "meld/core/dot/function_graph.hpp"
+#include "meld/core/edge_creation_policy.hpp"
 #include "meld/core/filter.hpp"
 #include "meld/core/multiplexer.hpp"
+
+#include "oneapi/tbb/flow_graph.h"
 
 #include <map>
 #include <memory>
@@ -55,15 +58,6 @@ namespace meld {
     auto release_function_graph() { return std::move(function_graph_); }
 
   private:
-    struct named_output_port {
-      std::string node_name;
-      tbb::flow::sender<message>* port;
-      tbb::flow::sender<message>* to_output;
-    };
-
-    template <typename T>
-    static std::map<product_name_t, named_output_port> producing_nodes(T& nodes);
-
     template <typename T>
     void record_attributes(T& consumers);
 
@@ -73,7 +67,7 @@ namespace meld {
     std::unique_ptr<dot::function_graph> function_graph_;
     std::unique_ptr<dot::data_graph> data_graph_;
 
-    std::map<product_name_t, named_output_port> producers_;
+    edge_creation_policy producers_;
     std::map<std::string, dot::attributes> attributes_;
 
     template <typename T>
@@ -104,7 +98,7 @@ namespace meld {
     {
       make_edge(*sender.port, receiver);
       if (function_graph_) {
-        function_graph_->edge(sender.node_name,
+        function_graph_->edge(sender.node.full(),
                               receiver_node_name,
                               {.color = "blue",
                                .fontsize = dot::default_fontsize,
@@ -118,23 +112,9 @@ namespace meld {
   template <typename... Args>
   edge_maker::edge_maker(std::string const& file_prefix, Args&... producers) :
     function_graph_{file_prefix.empty() ? nullptr : std::make_unique<dot::function_graph>()},
-    data_graph_{file_prefix.empty() ? nullptr : std::make_unique<dot::data_graph>()}
+    data_graph_{file_prefix.empty() ? nullptr : std::make_unique<dot::data_graph>()},
+    producers_{producers...}
   {
-    (producers_.merge(producing_nodes(producers)), ...);
-  }
-
-  template <typename T>
-  std::map<product_name_t, edge_maker::named_output_port> edge_maker::producing_nodes(T& nodes)
-  {
-    std::map<product_name_t, named_output_port> result;
-    for (auto const& [node_name, node] : nodes) {
-      for (auto const& product_name : node->output()) {
-        if (empty(product_name.name()))
-          continue;
-        result[product_name.full("/")] = {node_name, &node->sender(), &node->to_output()};
-      }
-    }
-    return result;
   }
 
   template <typename T>
@@ -161,14 +141,14 @@ namespace meld {
 
       for (auto const& product_label : node->input()) {
         auto* receiver_port = collector ? collector : &node->port(product_label);
-        auto it = producers_.find(product_label.name.full("/"));
-        if (it == cend(producers_)) {
+        auto producer = producers_.find_producer(product_label.name);
+        if (not producer) {
           // Is there a way to detect mis-specified product dependencies?
           result[node_name].push_back({product_label, receiver_port});
           continue;
         }
 
-        make_the_edge(it->second, *receiver_port, node_name, to_name(product_label));
+        make_the_edge(*producer, *receiver_port, node_name, to_name(product_label));
       }
     }
     return result;
@@ -194,10 +174,10 @@ namespace meld {
         function_graph_->node(output_name, {.shape = "cylinder"});
         function_graph_->edge("Source", output_name, {.color = "gray"});
       }
-      for (auto const& named_port : producers_ | std::views::values) {
+      for (auto const& named_port : producers_.values()) {
         make_edge(*named_port.to_output, output_node->port());
         if (function_graph_) {
-          function_graph_->edge(named_port.node_name, output_name, {.color = "gray"});
+          function_graph_->edge(named_port.node.full(), output_name, {.color = "gray"});
         }
       }
       for (auto const& [splitter_name, splitter] : splitters.data) {

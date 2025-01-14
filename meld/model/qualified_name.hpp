@@ -1,6 +1,8 @@
 #ifndef meld_model_qualified_name_hpp
 #define meld_model_qualified_name_hpp
 
+#include "meld/model/algorithm_name.hpp"
+
 #include <span>
 #include <string>
 
@@ -10,18 +12,23 @@ namespace meld {
     qualified_name();
     qualified_name(char const* name);
     qualified_name(std::string name);
-    qualified_name(std::string module, std::string name);
+    qualified_name(algorithm_name qualifier, std::string name);
 
-    std::string full(std::string const& delimiter = ":") const;
-    std::string const& module() const noexcept { return module_; }
+    std::string full() const;
+    algorithm_name const& qualifier() const noexcept { return qualifier_; }
+    std::string const& plugin() const noexcept { return qualifier_.plugin(); }
+    std::string const& algorithm() const noexcept { return qualifier_.algorithm(); }
     std::string const& name() const noexcept { return name_; }
 
     bool operator==(qualified_name const& other) const;
     bool operator!=(qualified_name const& other) const;
     bool operator<(qualified_name const& other) const;
 
+    static qualified_name create(char const* c);
+    static qualified_name create(std::string const& s);
+
   private:
-    std::string module_;
+    algorithm_name qualifier_;
     std::string name_;
   };
 
@@ -29,14 +36,14 @@ namespace meld {
 
   class to_qualified_name {
   public:
-    explicit to_qualified_name(std::string module) : module_{std::move(module)} {}
+    explicit to_qualified_name(algorithm_name const& qualifier) : qualifier_{qualifier} {}
     qualified_name operator()(std::string const& name) const
     {
-      return qualified_name{module_, name};
+      return qualified_name{qualifier_, name};
     }
 
   private:
-    std::string module_;
+    algorithm_name const& qualifier_;
   };
 }
 

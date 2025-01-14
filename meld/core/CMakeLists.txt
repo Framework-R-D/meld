@@ -11,6 +11,7 @@ add_library(meld_core SHARED
   dot/attributes.cpp
   dot/data_graph.cpp
   dot/function_graph.cpp
+  edge_creation_policy.cpp
   edge_maker.cpp
   end_of_message.cpp
   filter.cpp

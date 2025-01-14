@@ -1,34 +1,49 @@
 #include "meld/model/qualified_name.hpp"
+#include "meld/model/algorithm_name.hpp"
+
+#include <regex>
 
 namespace meld {
   qualified_name::qualified_name() = default;
 
-  qualified_name::qualified_name(char const* name) : qualified_name{"", name} {}
-  qualified_name::qualified_name(std::string name) : qualified_name{"", name} {}
+  qualified_name::qualified_name(char const* name) : qualified_name{std::string{name}} {}
+  qualified_name::qualified_name(std::string name) { *this = create(name); }
 
-  qualified_name::qualified_name(std::string module, std::string name) :
-    module_{std::move(module)}, name_{std::move(name)}
+  qualified_name::qualified_name(algorithm_name qualifier, std::string name) :
+    qualifier_{std::move(qualifier)}, name_{std::move(name)}
   {
   }
 
-  std::string qualified_name::full(std::string const& delimiter) const
+  std::string qualified_name::full() const
   {
-    std::string result{name_};
-    if (module_.empty()) {
-      return result;
+    auto const qualifier = qualifier_.full();
+    if (qualifier.empty()) {
+      return name_;
     }
-    return module_ + delimiter + result;
+    return qualifier + "/" + name_;
   }
 
   bool qualified_name::operator==(qualified_name const& other) const
   {
-    return std::tie(module_, name_) == std::tie(other.module_, other.name_);
+    return std::tie(qualifier_, name_) == std::tie(other.qualifier_, other.name_);
   }
 
   bool qualified_name::operator!=(qualified_name const& other) const { return !operator==(other); }
 
   bool qualified_name::operator<(qualified_name const& other) const
   {
-    return std::tie(module_, name_) < std::tie(other.module_, other.name_);
+    return std::tie(qualifier_, name_) < std::tie(other.qualifier_, other.name_);
   }
+
+  qualified_name qualified_name::create(char const* c) { return create(std::string{c}); }
+
+  qualified_name qualified_name::create(std::string const& s)
+  {
+    auto forward_slash = s.find("/");
+    if (forward_slash != std::string::npos) {
+      return {algorithm_name::create(s.substr(0, forward_slash)), s.substr(forward_slash + 1)};
+    }
+    return {algorithm_name::create(""), s};
+  }
+
 }

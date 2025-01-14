@@ -10,6 +10,7 @@
 #include "meld/core/products_consumer.hpp"
 #include "meld/core/registrar.hpp"
 #include "meld/core/store_counters.hpp"
+#include "meld/model/algorithm_name.hpp"
 #include "meld/model/handle.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -59,7 +60,7 @@ namespace meld {
 
   class declared_splitter : public products_consumer {
   public:
-    declared_splitter(qualified_name name, std::vector<std::string> predicates);
+    declared_splitter(algorithm_name name, std::vector<std::string> predicates);
     virtual ~declared_splitter();
 
     virtual tbb::flow::sender<message>& to_output() = 0;
@@ -83,7 +84,7 @@ namespace meld {
 
   public:
     partial_splitter(registrar<declared_splitters> reg,
-                     qualified_name name,
+                     algorithm_name name,
                      std::size_t concurrency,
                      std::vector<std::string> predicates,
                      tbb::flow::graph& g,
@@ -106,7 +107,7 @@ namespace meld {
     auto& into(std::array<std::string, M> output_products)
     {
       std::array<qualified_name, M> outputs;
-      std::ranges::transform(output_products, outputs.begin(), to_qualified_name{name_.module()});
+      std::ranges::transform(output_products, outputs.begin(), to_qualified_name{name_});
       reg_.set([this, out = std::move(outputs)] { return create(std::move(out)); });
       return *this;
     }
@@ -138,7 +139,7 @@ namespace meld {
                                                     std::move(new_level_name_));
     }
 
-    qualified_name name_;
+    algorithm_name name_;
     std::size_t concurrency_;
     std::vector<std::string> predicates_;
     tbb::flow::graph& graph_;
@@ -162,7 +163,7 @@ namespace meld {
     using const_accessor = stores_t::const_accessor;
 
   public:
-    complete_splitter(qualified_name name,
+    complete_splitter(algorithm_name name,
                       std::size_t concurrency,
                       std::vector<std::string> predicates,
                       tbb::flow::graph& g,

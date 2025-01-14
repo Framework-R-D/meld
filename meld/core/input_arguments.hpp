@@ -22,7 +22,7 @@ namespace meld {
     auto retrieve(auto const& messages) const
     {
       return std::get<JoinNodePort>(messages).store->template get_handle<handle_arg_t>(
-        label.name.full());
+        label.name.name());
     }
   };
 

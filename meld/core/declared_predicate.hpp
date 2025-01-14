@@ -11,10 +11,10 @@
 #include "meld/core/specified_label.hpp"
 #include "meld/core/store_counters.hpp"
 #include "meld/metaprogramming/type_deduction.hpp"
+#include "meld/model/algorithm_name.hpp"
 #include "meld/model/handle.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
-#include "meld/model/qualified_name.hpp"
 #include "meld/utilities/sized_tuple.hpp"
 
 #include "oneapi/tbb/concurrent_unordered_map.h"
@@ -40,7 +40,7 @@ namespace meld {
 
   class declared_predicate : public products_consumer {
   public:
-    declared_predicate(qualified_name name, std::vector<std::string> predicates);
+    declared_predicate(algorithm_name name, std::vector<std::string> predicates);
     virtual ~declared_predicate();
 
     virtual tbb::flow::sender<predicate_result>& sender() = 0;
@@ -60,7 +60,7 @@ namespace meld {
 
   public:
     pre_predicate(registrar<declared_predicates> reg,
-                  qualified_name name,
+                  algorithm_name name,
                   std::size_t concurrency,
                   std::vector<std::string> predicates,
                   tbb::flow::graph& g,
@@ -99,7 +99,7 @@ namespace meld {
                                                   std::move(input_args_),
                                                   std::move(product_labels_));
     }
-    qualified_name name_;
+    algorithm_name name_;
     std::size_t concurrency_;
     std::vector<std::string> predicates_;
     tbb::flow::graph& graph_;
@@ -122,7 +122,7 @@ namespace meld {
     using const_accessor = results_t::const_accessor;
 
   public:
-    complete_predicate(qualified_name name,
+    complete_predicate(algorithm_name name,
                        std::size_t concurrency,
                        std::vector<std::string> predicates,
                        tbb::flow::graph& g,

@@ -13,6 +13,7 @@
 #include "meld/core/specified_label.hpp"
 #include "meld/core/store_counters.hpp"
 #include "meld/metaprogramming/type_deduction.hpp"
+#include "meld/model/algorithm_name.hpp"
 #include "meld/model/handle.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -42,7 +43,7 @@ namespace meld {
 
   class declared_transform : public products_consumer {
   public:
-    declared_transform(qualified_name name, std::vector<std::string> predicates);
+    declared_transform(algorithm_name name, std::vector<std::string> predicates);
     virtual ~declared_transform();
 
     virtual tbb::flow::sender<message>& sender() = 0;
@@ -67,7 +68,7 @@ namespace meld {
 
   public:
     pre_transform(registrar<declared_transforms> reg,
-                  qualified_name name,
+                  algorithm_name name,
                   std::size_t concurrency,
                   std::vector<std::string> predicates,
                   tbb::flow::graph& g,
@@ -103,7 +104,7 @@ namespace meld {
         "objects.");
 
       std::array<qualified_name, Msize> outputs;
-      std::ranges::transform(output_keys, outputs.begin(), to_qualified_name{name_.module()});
+      std::ranges::transform(output_keys, outputs.begin(), to_qualified_name{name_});
       reg_.set([this, out = std::move(outputs)] { return create(std::move(out)); });
       return *this;
     }
@@ -130,7 +131,7 @@ namespace meld {
                                                   std::move(outputs));
     }
 
-    qualified_name name_;
+    algorithm_name name_;
     std::size_t concurrency_;
     std::vector<std::string> predicates_;
     tbb::flow::graph& graph_;
@@ -152,7 +153,7 @@ namespace meld {
     using const_accessor = stores_t::const_accessor;
 
   public:
-    total_transform(qualified_name name,
+    total_transform(algorithm_name name,
                     std::size_t concurrency,
                     std::vector<std::string> predicates,
                     tbb::flow::graph& g,

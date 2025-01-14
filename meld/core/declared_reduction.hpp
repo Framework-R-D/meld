@@ -11,6 +11,7 @@
 #include "meld/core/reduction/send.hpp"
 #include "meld/core/registrar.hpp"
 #include "meld/core/store_counters.hpp"
+#include "meld/model/algorithm_name.hpp"
 #include "meld/model/handle.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -37,7 +38,7 @@
 namespace meld {
   class declared_reduction : public products_consumer {
   public:
-    declared_reduction(qualified_name name, std::vector<std::string> predicates);
+    declared_reduction(algorithm_name name, std::vector<std::string> predicates);
     virtual ~declared_reduction();
 
     virtual tbb::flow::sender<message>& sender() = 0;
@@ -66,7 +67,7 @@ namespace meld {
 
   public:
     pre_reduction(registrar<declared_reductions> reg,
-                  qualified_name name,
+                  algorithm_name name,
                   std::size_t concurrency,
                   std::vector<std::string> predicates,
                   tbb::flow::graph& g,
@@ -90,7 +91,7 @@ namespace meld {
         M == Msize,
         "The number of function parameters is not the same as the number of returned output "
         "objects.");
-      std::ranges::transform(output_keys, output_names_.begin(), to_qualified_name{name_.module()});
+      std::ranges::transform(output_keys, output_names_.begin(), to_qualified_name{name_});
       reg_.set([this] { return create(std::make_tuple()); });
       return *this;
     }
@@ -136,7 +137,7 @@ namespace meld {
                                                                std::move(reduction_interval_));
     }
 
-    qualified_name name_;
+    algorithm_name name_;
     std::size_t concurrency_;
     std::vector<std::string> predicates_;
     tbb::flow::graph& graph_;
@@ -155,7 +156,7 @@ namespace meld {
     private count_stores {
 
   public:
-    total_reduction(qualified_name name,
+    total_reduction(algorithm_name name,
                     std::size_t concurrency,
                     std::vector<std::string> predicates,
                     tbb::flow::graph& g,
@@ -262,10 +263,10 @@ namespace meld {
     {
       auto& result = results_.at(*store.id());
       if constexpr (requires { send(*result); }) {
-        store.add_product(output()[0].full(), send(*result));
+        store.add_product(output()[0].name(), send(*result));
       }
       else {
-        store.add_product(output()[0].full(), std::move(*result));
+        store.add_product(output()[0].name(), std::move(*result));
       }
       // Reclaim some memory; it would be better to erase the entire entry from the map,
       // but that is not thread-safe.

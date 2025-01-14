@@ -7,9 +7,9 @@
 #include "meld/core/message.hpp"
 #include "meld/core/node_options.hpp"
 #include "meld/core/registrar.hpp"
+#include "meld/model/algorithm_name.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
-#include "meld/model/qualified_name.hpp"
 
 #include "oneapi/tbb/flow_graph.h"
 
@@ -27,7 +27,7 @@ namespace meld {
   }
   class declared_output : public consumer {
   public:
-    declared_output(qualified_name name,
+    declared_output(algorithm_name name,
                     std::size_t concurrency,
                     std::vector<std::string> predicates,
                     tbb::flow::graph& g,
@@ -72,7 +72,7 @@ namespace meld {
                                                std::move(ft_));
     }
 
-    qualified_name name_;
+    algorithm_name name_;
     tbb::flow::graph& graph_;
     detail::output_function_t ft_;
     concurrency concurrency_;

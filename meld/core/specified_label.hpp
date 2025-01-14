@@ -17,8 +17,8 @@ namespace meld {
     std::string family;
     std::shared_ptr<specified_label> relation;
     specified_label operator()(std::string family) &&;
-    specified_label related_to(std::string relation) &&;
-    specified_label related_to(specified_label relation) &&;
+    // specified_label related_to(std::string relation) &&;
+    // specified_label related_to(specified_label relation) &&;
     std::string to_string() const;
 
     static specified_label create(char const* c);

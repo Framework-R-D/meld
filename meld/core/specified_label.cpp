@@ -1,8 +1,8 @@
 #include "meld/core/specified_label.hpp"
 
 #include "fmt/format.h"
-#include "spdlog/spdlog.h"
 
+#include <ostream>
 #include <stdexcept>
 #include <tuple>
 
@@ -12,18 +12,18 @@ namespace meld {
     return {std::move(name), std::move(family)};
   }
 
-  specified_label specified_label::related_to(std::string relation) &&
-  {
-    return {std::move(name),
-            std::move(family),
-            std::make_shared<specified_label>(specified_label{relation})};
-  }
+  // specified_label specified_label::related_to(std::string relation) &&
+  // {
+  //   return {std::move(name),
+  //           std::move(family),
+  //           std::make_shared<specified_label>(specified_label{relation})};
+  // }
 
-  specified_label specified_label::related_to(specified_label relation) &&
-  {
-    return {
-      std::move(name), std::move(family), std::make_shared<specified_label>(std::move(relation))};
-  }
+  // specified_label specified_label::related_to(specified_label relation) &&
+  // {
+  //   return {
+  //     std::move(name), std::move(family), std::make_shared<specified_label>(std::move(relation))};
+  // }
 
   std::string specified_label::to_string() const
   {
@@ -33,25 +33,12 @@ namespace meld {
     return fmt::format("{} ϵ {}", name.full(), family);
   }
 
-  specified_label specified_label::create(char const* c) { return create(std::string{c}); }
-
-  specified_label specified_label::create(std::string const& s)
-  {
-    auto pos = s.find("/");
-    if (pos == std::string::npos) {
-      return {qualified_name{s}};
-    }
-    return {qualified_name{s.substr(0, pos), s.substr(pos + 1)}};
-  }
-
-  specified_label specified_label::create(specified_label l) { return l; }
-
   specified_label operator""_in(char const* name, std::size_t length)
   {
     if (length == 0ull) {
       throw std::runtime_error("Cannot specify product with empty name.");
     }
-    return {name};
+    return specified_label::create(name);
   }
 
   bool operator==(specified_label const& a, specified_label const& b)
@@ -71,4 +58,13 @@ namespace meld {
     os << label.to_string();
     return os;
   }
+
+  specified_label specified_label::create(char const* c) { return create(std::string{c}); }
+
+  specified_label specified_label::create(std::string const& s)
+  {
+    return {qualified_name::create(s)};
+  }
+
+  specified_label specified_label::create(specified_label l) { return l; }
 }

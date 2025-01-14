@@ -3,7 +3,9 @@
 #include <string>
 
 namespace {
-  std::vector<meld::specified_label> const for_output_only{{"for_output_only"}};
+  meld::specified_label const output_dummy{
+    meld::qualified_name{meld::algorithm_name{"for_output_only", ""}, "for_output_only"}};
+  std::vector<meld::specified_label> const for_output_only{output_dummy};
 }
 
 namespace meld {

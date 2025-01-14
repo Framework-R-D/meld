@@ -1,7 +1,7 @@
 #include "meld/core/declared_output.hpp"
 
 namespace meld {
-  declared_output::declared_output(qualified_name name,
+  declared_output::declared_output(algorithm_name name,
                                    std::size_t concurrency,
                                    std::vector<std::string> predicates,
                                    tbb::flow::graph& g,

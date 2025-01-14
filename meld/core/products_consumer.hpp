@@ -5,8 +5,8 @@
 #include "meld/core/fwd.hpp"
 #include "meld/core/message.hpp"
 #include "meld/core/specified_label.hpp"
+#include "meld/model/algorithm_name.hpp"
 #include "meld/model/level_id.hpp"
-#include "meld/model/qualified_name.hpp"
 
 #include "oneapi/tbb/flow_graph.h"
 
@@ -17,7 +17,7 @@
 namespace meld {
   class products_consumer : public consumer {
   public:
-    products_consumer(qualified_name name, std::vector<std::string> predicates);
+    products_consumer(algorithm_name name, std::vector<std::string> predicates);
 
     virtual ~products_consumer();
 

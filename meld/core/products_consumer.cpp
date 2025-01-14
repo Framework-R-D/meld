@@ -2,7 +2,7 @@
 
 namespace meld {
 
-  products_consumer::products_consumer(qualified_name name, std::vector<std::string> predicates) :
+  products_consumer::products_consumer(algorithm_name name, std::vector<std::string> predicates) :
     consumer{std::move(name), std::move(predicates)}
   {
   }

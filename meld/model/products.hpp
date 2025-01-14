@@ -51,14 +51,14 @@ namespace meld {
     template <typename Ts>
     void add_all(std::array<qualified_name, 1> names, Ts&& ts)
     {
-      add(names[0].full(), std::forward<Ts>(ts));
+      add(names[0].name(), std::forward<Ts>(ts));
     }
 
     template <typename... Ts>
     void add_all(std::array<qualified_name, sizeof...(Ts)> names, std::tuple<Ts...> ts)
     {
       [this, &names]<std::size_t... Is>(auto const& ts, std::index_sequence<Is...>) {
-        (this->add(names[Is].full(), std::get<Is>(ts)), ...);
+        (this->add(names[Is].name(), std::get<Is>(ts)), ...);
       }(ts, std::index_sequence_for<Ts...>{});
     }
 

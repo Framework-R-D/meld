@@ -12,7 +12,7 @@
 #include "meld/core/node_options.hpp"
 #include "meld/metaprogramming/delegate.hpp"
 #include "meld/metaprogramming/type_deduction.hpp"
-#include "meld/model/qualified_name.hpp"
+#include "meld/model/algorithm_name.hpp"
 
 #include <concepts>
 #include <functional>
@@ -132,7 +132,7 @@ namespace meld {
       static_assert(N == sizeof...(input_args),
                     "The number of function parameters is not the same as the number of specified "
                     "input arguments.");
-      return evaluate({specified_label{std::forward<decltype(input_args)>(input_args)}...});
+      return evaluate({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
     auto monitor(label_compatible auto... input_args)
@@ -140,7 +140,7 @@ namespace meld {
       static_assert(N == sizeof...(input_args),
                     "The number of function parameters is not the same as the number of specified "
                     "input arguments.");
-      return monitor({specified_label{std::forward<decltype(input_args)>(input_args)}...});
+      return monitor({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
     auto transform(label_compatible auto... input_args)
@@ -148,7 +148,8 @@ namespace meld {
       static_assert(N == sizeof...(input_args),
                     "The number of function parameters is not the same as the number of specified "
                     "input arguments.");
-      return transform({specified_label{std::forward<decltype(input_args)>(input_args)}...});
+      return transform(
+        {specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
     auto reduce(label_compatible auto... input_args)
@@ -156,11 +157,11 @@ namespace meld {
       static_assert(N - 1 == sizeof...(input_args),
                     "The number of function parameters is not the same as the number of specified "
                     "input arguments.");
-      return reduce({specified_label{std::forward<decltype(input_args)>(input_args)}...});
+      return reduce({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
   private:
-    qualified_name name_;
+    algorithm_name name_;
     std::shared_ptr<T> obj_;
     FT ft_;
     concurrency concurrency_;

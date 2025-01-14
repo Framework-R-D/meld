@@ -12,7 +12,7 @@
 #include "meld/core/node_options.hpp"
 #include "meld/metaprogramming/delegate.hpp"
 #include "meld/metaprogramming/type_deduction.hpp"
-#include "meld/model/qualified_name.hpp"
+#include "meld/model/algorithm_name.hpp"
 
 #include <concepts>
 #include <functional>
@@ -75,7 +75,7 @@ namespace meld {
     }
 
   private:
-    qualified_name name_;
+    algorithm_name name_;
     Predicate predicate_;
     Unfold unfold_;
     std::size_t concurrency_;

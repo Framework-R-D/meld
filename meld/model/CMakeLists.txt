@@ -1,4 +1,5 @@
 add_library(meld_model SHARED
+  algorithm_name.cpp
   level_counter.cpp
   level_hierarchy.cpp
   level_id.cpp
