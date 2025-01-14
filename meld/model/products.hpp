@@ -7,7 +7,6 @@
 #include "boost/core/demangle.hpp"
 #include "spdlog/spdlog.h"
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <typeindex>

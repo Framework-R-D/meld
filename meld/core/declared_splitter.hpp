@@ -44,7 +44,6 @@ namespace meld {
                        std::string const& new_level_name);
     product_store_const_ptr flush_store() const;
 
-    template <typename... Ts>
     product_store_const_ptr make_child_for(std::size_t const level_number, products new_products)
     {
       return make_child(level_number, std::move(new_products));

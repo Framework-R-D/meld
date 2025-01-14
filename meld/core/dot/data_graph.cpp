@@ -91,7 +91,7 @@ namespace meld::dot {
       source_name = name.name();
     }
     nodes_.push_back(
-      {source_full_name, {.label = parenthesized(source_name), .fontcolor = source_color}});
+      {source_full_name, {.fontcolor = source_color, .label = parenthesized(source_name)}});
 
     std::string target_full_name{};
     std::string target_name{};
@@ -113,7 +113,7 @@ namespace meld::dot {
     }
 
     nodes_.push_back(
-      {target_full_name, {.label = parenthesized(target_name), .fontcolor = target_color}});
+      {target_full_name, {.fontcolor = target_color, .label = parenthesized(target_name)}});
     edges_.push_back({source_full_name, target_full_name, function_name});
   }
 
