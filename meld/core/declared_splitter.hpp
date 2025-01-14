@@ -53,7 +53,7 @@ namespace meld {
   private:
     product_store_const_ptr make_child(std::size_t i, products new_products);
     product_store_ptr parent_;
-    std::string const& node_name_;
+    std::string_view node_name_;
     std::string const& new_level_name_;
     std::map<level_id::hash_type, std::size_t> child_counts_;
   };

@@ -107,10 +107,10 @@ namespace meld {
 
     resource_usage graph_resource_usage_{};
     concurrency::max_allowed_parallelism parallelism_limit_;
-    tbb::flow::graph graph_{};
     level_hierarchy hierarchy_{};
-    node_catalog nodes_{};
     cached_product_stores stores_{};
+    node_catalog nodes_{};
+    tbb::flow::graph graph_{};
     std::vector<std::string> registration_errors_{};
     std::map<std::string, filter> filters_{};
     tbb::flow::input_node<message> src_;
