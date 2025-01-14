@@ -94,7 +94,7 @@ namespace meld {
     if (auto it = nodes_.transforms_.find(node_name); it != nodes_.transforms_.end()) {
       return it->second->num_calls();
     }
-    return 0u;
+    return -1u;
   }
 
   std::size_t framework_graph::product_counts(std::string const& node_name) const
@@ -109,7 +109,7 @@ namespace meld {
     if (auto it = nodes_.transforms_.find(node_name); it != nodes_.transforms_.end()) {
       return it->second->product_count();
     }
-    return 0u;
+    return -1u;
   }
 
   void framework_graph::execute(std::string const& dot_file_prefix)

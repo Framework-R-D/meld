@@ -2,6 +2,7 @@
 #define meld_core_glue_hpp
 
 #include "meld/concurrency.hpp"
+#include "meld/configuration.hpp"
 #include "meld/core/bound_function.hpp"
 #include "meld/core/concepts.hpp"
 #include "meld/core/double_bound_function.hpp"
@@ -13,6 +14,7 @@
 #include "oneapi/tbb/flow_graph.h"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -36,6 +38,16 @@ namespace meld {
 
     auto with(std::string name, auto f, concurrency c = concurrency::serial)
     {
+      if (name.empty()) {
+        std::string msg{"Cannot specify algorithm with no name"};
+        std::string const module = config_ ? config_->get<std::string>("module_label") : "";
+        if (!module.empty()) {
+          msg += " (module: '";
+          msg += module;
+          msg += "')";
+        }
+        throw std::runtime_error{msg};
+      }
       return bound_function{config_, std::move(name), bound_obj_, f, c, graph_, nodes_, errors_};
     }
 

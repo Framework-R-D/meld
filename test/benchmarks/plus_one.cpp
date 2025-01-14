@@ -6,4 +6,4 @@ namespace {
   int plus_one(int i) noexcept { return i + 1; }
 }
 
-DEFINE_MODULE(m) { m.with(plus_one, concurrency::unlimited).transform("a").to("b"); }
+DEFINE_MODULE(m) { m.with("plus_one", plus_one, concurrency::unlimited).transform("a").to("b"); }

@@ -7,5 +7,6 @@ namespace {
 
 DEFINE_MODULE(m, config)
 {
-  m.with(read_index, meld::concurrency::unlimited).monitor(config.get<std::string>("consumes"));
+  m.with("read_index", read_index, meld::concurrency::unlimited)
+    .monitor(config.get<std::string>("consumes"));
 }
