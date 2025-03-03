@@ -18,6 +18,6 @@ int main()
   static_assert(is_transform_like<decltype(&A::call)>);
   static_assert(not is_transform_like<decltype(not_a_transform)>);
 
-  static_assert(not is_monitor_like<decltype(transform)>);
-  static_assert(is_monitor_like<decltype(not_a_transform)>);
+  static_assert(not is_observer_like<decltype(transform)>);
+  static_assert(is_observer_like<decltype(not_a_transform)>);
 }

@@ -1,7 +1,7 @@
 add_library(meld_core SHARED
   concurrency.cpp
   consumer.cpp
-  declared_monitor.cpp
+  declared_observer.cpp
   declared_output.cpp
   declared_predicate.cpp
   declared_reduction.cpp

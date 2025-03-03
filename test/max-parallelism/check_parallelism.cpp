@@ -1,5 +1,5 @@
 // =======================================================================================
-// This plugin contains *both* a source and a monitor.  This is not normally what anyone
+// This plugin contains *both* a source and a observe.  This is not normally what anyone
 // would want to do.  But Boost's DLL support is robust enough to handle this
 // circumstance.
 //
@@ -43,5 +43,5 @@ DEFINE_MODULE(m, config)
          [expected = config.get<std::size_t>("expected_parallelism")](std::size_t actual) {
            assert(actual == expected);
          })
-    .monitor("max_parallelism");
+    .observe("max_parallelism");
 }

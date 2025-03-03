@@ -66,6 +66,6 @@ TEST_CASE("Call multiple functions", "[programming model]")
   }
 
   // The following is invoked for *each* section above
-  g.with("verify_result", [](double actual) { assert(actual == 6.); }).monitor("result");
+  g.with("verify_result", [](double actual) { assert(actual == 6.); }).observe("result");
   g.execute();
 }

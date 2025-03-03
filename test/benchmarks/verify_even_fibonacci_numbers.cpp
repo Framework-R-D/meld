@@ -19,5 +19,5 @@ DEFINE_MODULE(m, config)
   using namespace test;
   m.make<even_fibonacci_numbers>(config.get<int>("max_number"))
     .with(&even_fibonacci_numbers::only_even, meld::concurrency::unlimited)
-    .monitor(config.get<std::string>("consumes"));
+    .observe(config.get<std::string>("consumes"));
 }

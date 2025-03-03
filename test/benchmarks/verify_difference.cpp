@@ -10,5 +10,5 @@ DEFINE_MODULE(m, config)
      "verify_difference",
      [expected = config.get<int>("expected", 100)](int i, int j) { assert(j - i == expected); },
      concurrency::unlimited)
-    .monitor(config.get<std::string>("i", "b"), config.get<std::string>("j", "c"));
+    .observe(config.get<std::string>("i", "b"), config.get<std::string>("j", "c"));
 }

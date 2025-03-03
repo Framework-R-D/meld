@@ -51,7 +51,7 @@ namespace meld {
   concept is_predicate_like = at_least_one_input_parameter<T> && returns<T, bool>;
 
   template <typename T>
-  concept is_monitor_like = at_least_one_input_parameter<T> && returns<T, void>;
+  concept is_observer_like = at_least_one_input_parameter<T> && returns<T, void>;
 
   template <typename T>
   concept is_output_like = std::is_member_function_pointer_v<T> &&

@@ -1,7 +1,7 @@
 #ifndef meld_core_node_catalog_hpp
 #define meld_core_node_catalog_hpp
 
-#include "meld/core/declared_monitor.hpp"
+#include "meld/core/declared_observer.hpp"
 #include "meld/core/declared_output.hpp"
 #include "meld/core/declared_predicate.hpp"
 #include "meld/core/declared_reduction.hpp"
@@ -15,7 +15,10 @@ namespace meld {
     {
       return registrar{predicates_, errors};
     }
-    auto register_monitor(std::vector<std::string>& errors) { return registrar{monitors_, errors}; }
+    auto register_observer(std::vector<std::string>& errors)
+    {
+      return registrar{observers_, errors};
+    }
     auto register_output(std::vector<std::string>& errors) { return registrar{outputs_, errors}; }
     auto register_reduction(std::vector<std::string>& errors)
     {
@@ -31,7 +34,7 @@ namespace meld {
     }
 
     declared_predicates predicates_{};
-    declared_monitors monitors_{};
+    declared_observers observers_{};
     declared_outputs outputs_{};
     declared_reductions reductions_{};
     declared_splitters splitters_{};

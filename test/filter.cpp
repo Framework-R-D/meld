@@ -94,12 +94,12 @@ TEST_CASE("Two predicates", "[filtering]")
   g.make<sum_numbers>(20u)
     .with("add_evens", &sum_numbers::add, concurrency::unlimited)
     .when("evens_only")
-    .monitor("num")
+    .observe("num")
     .for_each("event");
   g.make<sum_numbers>(25u)
     .with("add_odds", &sum_numbers::add, concurrency::unlimited)
     .when("odds_only")
-    .monitor("num")
+    .observe("num")
     .for_each("event");
 
   g.execute("two_independent_predicates_t");
@@ -113,7 +113,7 @@ TEST_CASE("Two predicates in series", "[filtering]")
   g.make<sum_numbers>(0u)
     .with(&sum_numbers::add, concurrency::unlimited)
     .when("odds_only")
-    .monitor("num");
+    .observe("num");
 
   g.execute("two_predicates_in_series_t");
 }
@@ -126,7 +126,7 @@ TEST_CASE("Two predicates in parallel", "[filtering]")
   g.make<sum_numbers>(0u)
     .with(&sum_numbers::add, concurrency::unlimited)
     .when("odds_only", "evens_only")
-    .monitor("num");
+    .observe("num");
 
   g.execute("two_predicates_in_parallel_t");
 }
@@ -155,7 +155,7 @@ TEST_CASE("Three predicates in parallel", "[filtering]")
   g.make<collect_numbers>(expected_numbers)
     .with(&collect_numbers::collect, concurrency::unlimited)
     .when(predicate_names)
-    .monitor("num");
+    .observe("num");
 
   g.execute("three_predicates_in_parallel_t");
 }
@@ -168,12 +168,12 @@ TEST_CASE("Two predicates in parallel (each with multiple arguments)", "[filteri
   g.make<check_multiple_numbers>(5 * 100)
     .with("check_evens", &check_multiple_numbers::add_difference, concurrency::unlimited)
     .when("evens_only")
-    .monitor("num", "other_num"); // <= Note input order
+    .observe("num", "other_num"); // <= Note input order
 
   g.make<check_multiple_numbers>(-5 * 100)
     .with("check_odds", &check_multiple_numbers::add_difference, concurrency::unlimited)
     .when("odds_only")
-    .monitor("other_num", "num"); // <= Note input order
+    .observe("other_num", "num"); // <= Note input order
 
   g.execute("two_predicates_in_parallel_multiarg_t");
 }

@@ -1,5 +1,5 @@
-#ifndef meld_core_declared_monitor_hpp
-#define meld_core_declared_monitor_hpp
+#ifndef meld_core_declared_observer_hpp
+#define meld_core_declared_observer_hpp
 
 #include "meld/core/concepts.hpp"
 #include "meld/core/detail/port_names.hpp"
@@ -37,31 +37,31 @@
 
 namespace meld {
 
-  class declared_monitor : public products_consumer {
+  class declared_observer : public products_consumer {
   public:
-    declared_monitor(algorithm_name name, std::vector<std::string> predicates);
-    virtual ~declared_monitor();
+    declared_observer(algorithm_name name, std::vector<std::string> predicates);
+    virtual ~declared_observer();
   };
 
-  using declared_monitor_ptr = std::unique_ptr<declared_monitor>;
-  using declared_monitors = std::map<std::string, declared_monitor_ptr>;
+  using declared_observer_ptr = std::unique_ptr<declared_observer>;
+  using declared_observers = std::map<std::string, declared_observer_ptr>;
 
-  // Registering concrete monitors
-  template <is_monitor_like FT, typename InputArgs>
-  class pre_monitor {
+  // Registering concrete observers
+  template <is_observer_like FT, typename InputArgs>
+  class pre_observer {
     static constexpr std::size_t N = std::tuple_size_v<InputArgs>;
     using function_t = FT;
 
-    class complete_monitor;
+    class complete_observer;
 
   public:
-    pre_monitor(registrar<declared_monitors> reg,
-                algorithm_name name,
-                std::size_t concurrency,
-                std::vector<std::string> predicates,
-                tbb::flow::graph& g,
-                function_t&& f,
-                InputArgs input_args) :
+    pre_observer(registrar<declared_observers> reg,
+                 algorithm_name name,
+                 std::size_t concurrency,
+                 std::vector<std::string> predicates,
+                 tbb::flow::graph& g,
+                 function_t&& f,
+                 InputArgs input_args) :
       name_{std::move(name)},
       concurrency_{concurrency},
       predicates_{std::move(predicates)},
@@ -85,15 +85,15 @@ namespace meld {
     }
 
   private:
-    declared_monitor_ptr create()
+    declared_observer_ptr create()
     {
-      return std::make_unique<complete_monitor>(std::move(name_),
-                                                concurrency_,
-                                                std::move(predicates_),
-                                                graph_,
-                                                std::move(ft_),
-                                                std::move(input_args_),
-                                                std::move(product_labels_));
+      return std::make_unique<complete_observer>(std::move(name_),
+                                                 concurrency_,
+                                                 std::move(predicates_),
+                                                 graph_,
+                                                 std::move(ft_),
+                                                 std::move(input_args_),
+                                                 std::move(product_labels_));
     }
     algorithm_name name_;
     std::size_t concurrency_;
@@ -102,12 +102,12 @@ namespace meld {
     function_t ft_;
     InputArgs input_args_;
     std::array<specified_label, N> product_labels_;
-    registrar<declared_monitors> reg_;
+    registrar<declared_observers> reg_;
   };
 
-  template <is_monitor_like FT, typename InputArgs>
-  class pre_monitor<FT, InputArgs>::complete_monitor :
-    public declared_monitor,
+  template <is_observer_like FT, typename InputArgs>
+  class pre_observer<FT, InputArgs>::complete_observer :
+    public declared_observer,
     private detect_flush_flag {
 
     static constexpr auto N = std::tuple_size_v<InputArgs>;
@@ -116,42 +116,42 @@ namespace meld {
     using accessor = stores_t::accessor;
 
   public:
-    complete_monitor(algorithm_name name,
-                     std::size_t concurrency,
-                     std::vector<std::string> predicates,
-                     tbb::flow::graph& g,
-                     function_t&& f,
-                     InputArgs input,
-                     std::array<specified_label, N> product_labels) :
-      declared_monitor{std::move(name), std::move(predicates)},
+    complete_observer(algorithm_name name,
+                      std::size_t concurrency,
+                      std::vector<std::string> predicates,
+                      tbb::flow::graph& g,
+                      function_t&& f,
+                      InputArgs input,
+                      std::array<specified_label, N> product_labels) :
+      declared_observer{std::move(name), std::move(predicates)},
       product_labels_{std::move(product_labels)},
       input_{std::move(input)},
       join_{make_join_or_none(g, std::make_index_sequence<N>{})},
-      monitor_{g,
-               concurrency,
-               [this, ft = std::move(f)](
-                 messages_t<N> const& messages) -> oneapi::tbb::flow::continue_msg {
-                 auto const& msg = most_derived(messages);
-                 auto const& [store, message_id] = std::tie(msg.store, msg.id);
-                 if (store->is_flush()) {
-                   flag_for(store->id()->hash()).flush_received(message_id);
-                 }
-                 else if (accessor a; needs_new(store, a)) {
-                   call(ft, messages, std::make_index_sequence<N>{});
-                   a->second = true;
-                   flag_for(store->id()->hash()).mark_as_processed();
-                 }
+      observer_{g,
+                concurrency,
+                [this, ft = std::move(f)](
+                  messages_t<N> const& messages) -> oneapi::tbb::flow::continue_msg {
+                  auto const& msg = most_derived(messages);
+                  auto const& [store, message_id] = std::tie(msg.store, msg.id);
+                  if (store->is_flush()) {
+                    flag_for(store->id()->hash()).flush_received(message_id);
+                  }
+                  else if (accessor a; needs_new(store, a)) {
+                    call(ft, messages, std::make_index_sequence<N>{});
+                    a->second = true;
+                    flag_for(store->id()->hash()).mark_as_processed();
+                  }
 
-                 if (done_with(store)) {
-                   stores_.erase(store->id()->hash());
-                 }
-                 return {};
-               }}
+                  if (done_with(store)) {
+                    stores_.erase(store->id()->hash());
+                  }
+                  return {};
+                }}
     {
-      make_edge(join_, monitor_);
+      make_edge(join_, observer_);
     }
 
-    ~complete_monitor()
+    ~complete_observer()
     {
       if (stores_.size() > 0ull) {
         spdlog::warn("Monitor {} has {} cached stores.", full_name(), stores_.size());
@@ -191,10 +191,10 @@ namespace meld {
     std::array<specified_label, N> product_labels_;
     InputArgs input_;
     join_or_none_t<N> join_;
-    tbb::flow::function_node<messages_t<N>> monitor_;
+    tbb::flow::function_node<messages_t<N>> observer_;
     tbb::concurrent_hash_map<level_id::hash_type, bool> stores_;
     std::atomic<std::size_t> calls_;
   };
 }
 
-#endif // meld_core_declared_monitor_hpp
+#endif // meld_core_declared_observer_hpp

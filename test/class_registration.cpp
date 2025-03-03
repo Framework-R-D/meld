@@ -92,7 +92,7 @@ TEST_CASE("Call non-framework functions", "[programming model]")
   }
 
   // The following is invoked for *each* section above
-  g.with(verify_results, concurrency::unlimited).monitor(product_names);
+  g.with(verify_results, concurrency::unlimited).observe(product_names);
 
   g.execute("class_component_t");
 }

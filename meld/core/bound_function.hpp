@@ -4,7 +4,7 @@
 #include "meld/concurrency.hpp"
 #include "meld/configuration.hpp"
 #include "meld/core/concepts.hpp"
-#include "meld/core/declared_monitor.hpp"
+#include "meld/core/declared_observer.hpp"
 #include "meld/core/declared_predicate.hpp"
 #include "meld/core/declared_reduction.hpp"
 #include "meld/core/declared_transform.hpp"
@@ -61,18 +61,18 @@ namespace meld {
                            std::move(inputs)};
     }
 
-    auto monitor(std::array<specified_label, N> input_args)
-      requires is_monitor_like<FT>
+    auto observe(std::array<specified_label, N> input_args)
+      requires is_observer_like<FT>
     {
       auto inputs =
         form_input_arguments<input_parameter_types>(name_.full(), std::move(input_args));
-      return pre_monitor{nodes_.register_monitor(errors_),
-                         std::move(name_),
-                         concurrency_.value,
-                         node_options_t::release_predicates(),
-                         graph_,
-                         delegate(obj_, ft_),
-                         std::move(inputs)};
+      return pre_observer{nodes_.register_observer(errors_),
+                          std::move(name_),
+                          concurrency_.value,
+                          node_options_t::release_predicates(),
+                          graph_,
+                          delegate(obj_, ft_),
+                          std::move(inputs)};
     }
 
     auto transform(std::array<specified_label, N> input_args)
@@ -110,9 +110,9 @@ namespace meld {
     }
 
     template <label_compatible L>
-    auto monitor(std::array<L, N> input_args)
+    auto observe(std::array<L, N> input_args)
     {
-      return monitor(to_labels(input_args));
+      return observe(to_labels(input_args));
     }
 
     template <label_compatible L>
@@ -135,12 +135,12 @@ namespace meld {
       return evaluate({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
-    auto monitor(label_compatible auto... input_args)
+    auto observe(label_compatible auto... input_args)
     {
       static_assert(N == sizeof...(input_args),
                     "The number of function parameters is not the same as the number of specified "
                     "input arguments.");
-      return monitor({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
+      return observe({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
     auto transform(label_compatible auto... input_args)

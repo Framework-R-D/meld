@@ -87,12 +87,12 @@ TEST_CASE("Different hierarchies used with reduction", "[graph]")
     .initialized_with(0u);
   g.with("job_add", add, concurrency::unlimited).reduce("number").to("job_sum");
 
-  g.with("verify_run_sum", [](unsigned int actual) { CHECK(actual == 10u); }).monitor("run_sum");
+  g.with("verify_run_sum", [](unsigned int actual) { CHECK(actual == 10u); }).observe("run_sum");
   g.with("verify_job_sum",
          [](unsigned int actual) {
            CHECK(actual == 20u + 45u); // 20u from events, 45u from trigger primitives
          })
-    .monitor("job_sum");
+    .observe("job_sum");
 
   g.execute();
 

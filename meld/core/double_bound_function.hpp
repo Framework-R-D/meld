@@ -4,7 +4,7 @@
 #include "meld/concurrency.hpp"
 #include "meld/configuration.hpp"
 #include "meld/core/concepts.hpp"
-#include "meld/core/declared_monitor.hpp"
+#include "meld/core/declared_observer.hpp"
 #include "meld/core/declared_predicate.hpp"
 #include "meld/core/declared_transform.hpp"
 #include "meld/core/input_arguments.hpp"

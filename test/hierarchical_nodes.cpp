@@ -120,7 +120,7 @@ TEST_CASE("Hierarchical nodes", "[graph]")
     .initialized_with(15u);
 
   g.with(scale, concurrency::unlimited).transform("added_data").to("result");
-  g.with(print_result, concurrency::unlimited).monitor("result", "strtime");
+  g.with(print_result, concurrency::unlimited).observe("result", "strtime");
 
   g.make<test::products_for_output>().output_with(&test::products_for_output::save).when();
 

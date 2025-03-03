@@ -82,7 +82,7 @@ namespace meld {
     if (auto it = nodes_.predicates_.find(node_name); it != nodes_.predicates_.end()) {
       return it->second->num_calls();
     }
-    if (auto it = nodes_.monitors_.find(node_name); it != nodes_.monitors_.end()) {
+    if (auto it = nodes_.observers_.find(node_name); it != nodes_.observers_.end()) {
       return it->second->num_calls();
     }
     if (auto it = nodes_.reductions_.find(node_name); it != nodes_.reductions_.end()) {
@@ -163,7 +163,7 @@ namespace meld {
     }
 
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.predicates_));
-    filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.monitors_));
+    filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.observers_));
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.outputs_));
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.reductions_));
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.splitters_));
@@ -175,7 +175,7 @@ namespace meld {
                filters_,
                nodes_.outputs_,
                consumers{nodes_.predicates_, {.shape = "box"}},
-               consumers{nodes_.monitors_, {.shape = "box"}},
+               consumers{nodes_.observers_, {.shape = "box"}},
                consumers{nodes_.reductions_, {.shape = "invtrapezium"}},
                consumers{nodes_.splitters_, {.shape = "trapezium"}},
                consumers{nodes_.transforms_, {.shape = "box"}});
