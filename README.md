@@ -24,7 +24,9 @@ Each of these aspects is discussed below:
 
 ## Building with MPD
 
-Setting up your Spack installation (once per machine)
+To build Meld using Fermilab's Spack bootstrap script and MPD extension, follow these steps.
+
+1. Set up your Spack installation (once per machine)
 
 ```console
 $ cd <some scratch area>
@@ -32,14 +34,14 @@ $ wget https://github.com/FNALssi/fermi-spack-tools/raw/refs/heads/fnal-develop/
 $ bash bootstrap $PWD/spack-fnal
 ```
 
-Setting up MPD for the Spack installation (once per Spack installation)
+2. Set up MPD for the Spack installation (once per Spack installation)
 
 ```console
 $ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
 $ spack mpd init
 ```
 
-Creating a new MPD project
+3. Create a new MPD project
 
 ```console
 $ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
@@ -50,7 +52,7 @@ $ spack mpd build -j12
 $ spack mpd test -j12
 ```
 
-Working on an existing MPD project from a new shell
+4. Work on an existing MPD project from a new shell
 
 ```console
 $ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
