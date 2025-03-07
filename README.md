@@ -28,18 +28,53 @@ To build Meld using Fermilab's Spack bootstrap script and MPD extension, follow 
 
 1. Set up your Spack installation (once per machine)
 
+On Linux, you can install and configure the right version of Spack and assocaited tools using our bootstrap script.
+
 ```console
 $ cd <some scratch area>
 $ wget https://github.com/FNALssi/fermi-spack-tools/raw/refs/heads/fnal-develop/bin/bootstrap
 $ bash bootstrap $PWD/spack-fnal
+$ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
 ```
 
-2. Set up MPD for the Spack installation (once per Spack installation)
+The `bootstrap` script does not work on macOS.
+To get going with macOS, do the following instead.
+Note that if you have a previous installation of spack, you may have a directory `$HOME/.spack`.
+These instructions have only been tested with a fresh installation, meaning there is no such directory.
 
 ```console
-$ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
+$ cd <some scratch area>
+$ git clone -b fnal_develop git@github.com:FNALssi/spack.git
+$ git clone -b develop git@github.com:FNALssi/fnal_art.git
+$ git clone git@github.com:FNALssi/spack-mpd.git
+$ source spack/share/spack/setup-env.sh
+$ spack repo add $PWD/fnal_art   # Fermilab's Spack recipes
+```
+Then you need to edit the Spack configuration using `spack config --scope site edit config`.
+Add the following to your configuration:
+
+```yaml
+config:
+  extensions:
+    - <path to your spack-mpd clone>
+```
+
+2. Set up MPD for the Spack installation (once per Spack installation).
+   We expect you're doing this in the same shell session used in step (1).
+   If that is not the case, repeat the `source` of the `setup-env.sh` file.
+
+```console
 $ spack mpd init
 ```
+
+3. Establish compilers
+
+```console
+spack compiler find
+spack compilers
+```
+
+This will find, and then report, what compilers you have available.
 
 3. Create a new MPD project
 
