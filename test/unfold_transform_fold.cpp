@@ -43,10 +43,12 @@ namespace {
                    chunksize);
     }
 
+    // The initial value of the count of how many waveforms we have made so far.
     std::size_t initial_value() const { return 0; }
 
     // When we have made at least as many waveforms as we have been asked to make
-    // for this unfold, we are done.
+    // for this unfold, we are done. The predicate answers the question "should
+    // we continue unfolding?"
     bool predicate(std::size_t made_so_far) const
     {
       bool const result = made_so_far < maxsize_;
@@ -66,7 +68,7 @@ namespace {
                    made_so_far,
                    chunksize_,
                    ws.size());
-      return std::make_pair(made_so_far + chunksize_, ws);
+      return std::make_pair(made_so_far + ws.size(), ws);
     }
 
   private:
@@ -84,17 +86,19 @@ int main()
   std::vector<level_id_ptr> levels;
   levels.reserve(index_limit + 1u);
   levels.push_back(level_id::base_ptr());
+  // TODO: Put runs and subruns into the hierarchy.
   for (unsigned i = 0u; i != index_limit; ++i) {
-    levels.push_back(level_id::base().make_child(i, "event"));
+    levels.push_back(level_id::base().make_child(i, "spill"));
   }
 
   // Create the lambda that will be used to intialize the graph.
   // The range [it, e) will be used to iterate over the levels.
   auto it = cbegin(levels);
   auto const e = cend(levels);
+  std::size_t counter = 1;
 
-  auto source
-    [[maybe_unused]] = [it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
+  auto source [[maybe_unused]] =
+    [it, e, counter](cached_product_stores& cached_stores) mutable -> product_store_ptr {
     // If the range is empty, return nullptr. This tells the framework_graph there is nothing
     // to process.
     if (it == e) {
@@ -104,10 +108,12 @@ int main()
     auto const& id = *it++;
 
     auto store = cached_stores.get_store(id);
-    if (store->id()->level_name() == "event") {
+    if (store->id()->level_name() == "spill") {
       // Put the WGI product into the spill, so that our CHOF can find it.
-      spdlog::info("Adding WGI to spill {} with count = {}", store->id()->hash(), 10);
-      store->add_product<WGI>("wgen", {10});
+      auto next_size = counter * 10;
+      spdlog::info("Adding WGI to spill {} with count = {}", store->id()->hash(), next_size);
+      store->add_product<WGI>("wgen", {next_size});
+      ++counter;
     }
     return store;
   };
