@@ -4,7 +4,7 @@
 #include "meld/configuration.hpp"
 #include "meld/core/cached_product_stores.hpp"
 #include "meld/core/declared_reduction.hpp"
-#include "meld/core/declared_splitter.hpp"
+#include "meld/core/declared_unfold.hpp"
 #include "meld/core/end_of_message.hpp"
 #include "meld/core/filter.hpp"
 #include "meld/core/glue.hpp"
@@ -100,7 +100,7 @@ namespace meld {
     glue<void_tag> proxy() { return {graph_, nodes_, nullptr, registration_errors_}; }
 
     template <typename T>
-    splitter_glue<T> unfold_proxy()
+    unfold_glue<T> unfold_proxy()
     {
       return {graph_, nodes_, registration_errors_};
     }

@@ -2,7 +2,7 @@
 #define meld_core_edge_maker_hpp
 
 #include "meld/core/declared_output.hpp"
-#include "meld/core/declared_splitter.hpp"
+#include "meld/core/declared_unfold.hpp"
 #include "meld/core/dot/attributes.hpp"
 #include "meld/core/dot/data_graph.hpp"
 #include "meld/core/dot/function_graph.hpp"
@@ -166,7 +166,7 @@ namespace meld {
     make_edge(source, multi);
 
     // Create edges to outputs
-    auto& splitters = std::get<consumers<declared_splitters>&>(std::tie(cons...));
+    auto& unfolds = std::get<consumers<declared_unfolds>&>(std::tie(cons...));
 
     for (auto const& [output_name, output_node] : outputs) {
       make_edge(source, output_node->port());
@@ -180,10 +180,10 @@ namespace meld {
           function_graph_->edge(named_port.node.full(), output_name, {.color = "gray"});
         }
       }
-      for (auto const& [splitter_name, splitter] : splitters.data) {
-        make_edge(splitter->to_output(), output_node->port());
+      for (auto const& [unfold_name, unfold] : unfolds.data) {
+        make_edge(unfold->to_output(), output_node->port());
         if (function_graph_) {
-          function_graph_->edge(splitter_name, output_name, {.color = "gray"});
+          function_graph_->edge(unfold_name, output_name, {.color = "gray"});
         }
       }
     }
@@ -192,7 +192,7 @@ namespace meld {
     multiplexer::head_ports_t head_ports;
     (head_ports.merge(edges(filters, cons)), ...);
 
-    // Create head nodes for splitters
+    // Create head nodes for unfolds
     auto get_consumed_products = [](auto const& cons, auto& products) {
       for (auto const& [key, consumer] : cons.data) {
         for (auto const& product_name : consumer->input() | std::views::transform(to_name)) {
@@ -205,9 +205,9 @@ namespace meld {
     (get_consumed_products(cons, consumed_products), ...);
 
     std::set<std::string> remove_ports_for_products;
-    for (auto const& [name, splitter] : splitters.data) {
+    for (auto const& [name, unfold] : unfolds.data) {
       multiplexer::head_ports_t heads;
-      for (auto const& product_name : splitter->output()) {
+      for (auto const& product_name : unfold->output()) {
         // There can be multiple head nodes that require the same product.
         remove_ports_for_products.insert(product_name.full());
         for (auto const& [node_name, ports] : head_ports) {
@@ -219,10 +219,10 @@ namespace meld {
           }
         }
       }
-      splitter->finalize(std::move(heads));
+      unfold->finalize(std::move(heads));
     }
 
-    // Remove head nodes claimed by splitters
+    // Remove head nodes claimed by unfolds
     for (auto const& key : remove_ports_for_products) {
       for (auto& ports : head_ports | std::views::values) {
         std::erase_if(ports,
@@ -233,8 +233,8 @@ namespace meld {
     multi.finalize(std::move(head_ports));
 
     if (function_graph_) {
-      for (auto const& [name, splitter] : splitters.data) {
-        for (auto const& [node_name, ports] : splitter->downstream_ports()) {
+      for (auto const& [name, unfold] : unfolds.data) {
+        for (auto const& [node_name, ports] : unfold->downstream_ports()) {
           function_graph_->edges_for(name, node_name, ports);
         }
       }

@@ -5,8 +5,8 @@
 #include "meld/core/declared_output.hpp"
 #include "meld/core/declared_predicate.hpp"
 #include "meld/core/declared_reduction.hpp"
-#include "meld/core/declared_splitter.hpp"
 #include "meld/core/declared_transform.hpp"
+#include "meld/core/declared_unfold.hpp"
 #include "meld/core/registrar.hpp"
 
 namespace meld {
@@ -24,10 +24,7 @@ namespace meld {
     {
       return registrar{reductions_, errors};
     }
-    auto register_splitter(std::vector<std::string>& errors)
-    {
-      return registrar{splitters_, errors};
-    }
+    auto register_unfold(std::vector<std::string>& errors) { return registrar{unfolds_, errors}; }
     auto register_transform(std::vector<std::string>& errors)
     {
       return registrar{transforms_, errors};
@@ -37,7 +34,7 @@ namespace meld {
     declared_observers observers_{};
     declared_outputs outputs_{};
     declared_reductions reductions_{};
-    declared_splitters splitters_{};
+    declared_unfolds unfolds_{};
     declared_transforms transforms_{};
   };
 }

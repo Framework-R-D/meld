@@ -6,7 +6,7 @@
 
 namespace meld {
   struct void_tag {};
-  struct splitter_tag {};
+  struct unfold_tag {};
 
   template <typename FT>
   auto delegate(std::shared_ptr<void_tag>&, FT f) // Used for lambda closures

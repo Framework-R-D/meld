@@ -88,7 +88,7 @@ namespace meld {
     if (auto it = nodes_.reductions_.find(node_name); it != nodes_.reductions_.end()) {
       return it->second->num_calls();
     }
-    if (auto it = nodes_.splitters_.find(node_name); it != nodes_.splitters_.end()) {
+    if (auto it = nodes_.unfolds_.find(node_name); it != nodes_.unfolds_.end()) {
       return it->second->num_calls();
     }
     if (auto it = nodes_.transforms_.find(node_name); it != nodes_.transforms_.end()) {
@@ -103,7 +103,7 @@ namespace meld {
     if (auto it = nodes_.reductions_.find(node_name); it != nodes_.reductions_.end()) {
       return it->second->product_count();
     }
-    if (auto it = nodes_.splitters_.find(node_name); it != nodes_.splitters_.end()) {
+    if (auto it = nodes_.unfolds_.find(node_name); it != nodes_.unfolds_.end()) {
       return it->second->product_count();
     }
     if (auto it = nodes_.transforms_.find(node_name); it != nodes_.transforms_.end()) {
@@ -166,7 +166,7 @@ namespace meld {
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.observers_));
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.outputs_));
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.reductions_));
-    filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.splitters_));
+    filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.unfolds_));
     filters_.merge(internal_edges_for_predicates(graph_, nodes_.predicates_, nodes_.transforms_));
 
     edge_maker make_edges{dot_file_prefix, nodes_.transforms_, nodes_.reductions_};
@@ -177,7 +177,7 @@ namespace meld {
                consumers{nodes_.predicates_, {.shape = "box"}},
                consumers{nodes_.observers_, {.shape = "box"}},
                consumers{nodes_.reductions_, {.shape = "invtrapezium"}},
-               consumers{nodes_.splitters_, {.shape = "trapezium"}},
+               consumers{nodes_.unfolds_, {.shape = "trapezium"}},
                consumers{nodes_.transforms_, {.shape = "box"}});
 
     if (auto data_graph = make_edges.release_data_graph()) {

@@ -5,7 +5,7 @@ add_library(meld_core SHARED
   declared_output.cpp
   declared_predicate.cpp
   declared_reduction.cpp
-  declared_splitter.cpp
+  declared_unfold.cpp
   declared_transform.cpp
   detail/filter_impl.cpp
   dot/attributes.cpp

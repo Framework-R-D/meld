@@ -66,7 +66,7 @@ namespace meld {
     returns<T, void>; // <= May change if data products can be created per reduction step.
 
   template <typename T>
-  concept is_splitter_like = expects_input_parameters<T, generator&> && returns<T, void>;
+  concept is_unfold_like = expects_input_parameters<T, generator&> && returns<T, void>;
 
   template <typename T>
   concept is_transform_like = at_least_one_input_parameter<T> && at_least_one_output_object<T>;

@@ -1,16 +1,16 @@
 // =======================================================================================
-// This test executes splitting functionality using the following graph
+// This test executes unfoldting functionality using the following graph
 //
 //     Multiplexer
 //          |
-//      splitter (creates children)
+//      unfold (creates children)
 //          |
 //         add(*)
 //          |
 //     print_result
 //
 // where the asterisk (*) indicates a reduction step.  The difference here is that the
-// *splitter* is responsible for sending the flush token instead of the
+// *unfold* is responsible for sending the flush token instead of the
 // source/multiplexer.
 // =======================================================================================
 
@@ -108,7 +108,7 @@ TEST_CASE("Splitting the processing", "[graph]")
   }};
 
   g.with<iota>(&iota::predicate, &iota::unfold, concurrency::unlimited)
-    .split("max_number")
+    .unfold("max_number")
     .into("new_number")
     .within_family("lower1");
   g.with(add, concurrency::unlimited).reduce("new_number").for_each("event").to("sum1");
@@ -116,7 +116,7 @@ TEST_CASE("Splitting the processing", "[graph]")
 
   g.with<iterate_through>(
      &iterate_through::predicate, &iterate_through::unfold, concurrency::unlimited)
-    .split("ten_numbers")
+    .unfold("ten_numbers")
     .into("each_number")
     .within_family("lower2");
   g.with(add_numbers, concurrency::unlimited).reduce("each_number").for_each("event").to("sum2");
@@ -125,7 +125,7 @@ TEST_CASE("Splitting the processing", "[graph]")
   g.make<test::products_for_output>().output_with(&test::products_for_output::save,
                                                   concurrency::serial);
 
-  g.execute("splitter_t");
+  g.execute("unfold_t");
 
   CHECK(g.execution_counts("iota") == index_limit);
   CHECK(g.execution_counts("add") == 30);
