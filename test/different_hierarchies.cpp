@@ -9,8 +9,8 @@
 //        |
 //   verify_job_sum
 //
-// where the asterisk (*) indicates a reduction step over the full job, and the caret (^)
-// represents a reduction step over each run.
+// where the asterisk (*) indicates a fold step over the full job, and the caret (^)
+// represents a fold step over each run.
 //
 // The hierarchy tested is:
 //
@@ -22,8 +22,8 @@
 //        │
 //        └ event
 //
-// As the run_add node performs reductions only over "runs", any "trigger primitive"
-// stores are excluded from the reduction result.
+// As the run_add node performs folds only over "runs", any "trigger primitive"
+// stores are excluded from the fold result.
 // =======================================================================================
 
 #include "meld/core/cached_product_stores.hpp"
@@ -44,7 +44,7 @@ namespace {
   void add(std::atomic<unsigned int>& counter, unsigned int number) { counter += number; }
 }
 
-TEST_CASE("Different hierarchies used with reduction", "[graph]")
+TEST_CASE("Different hierarchies used with fold", "[graph]")
 {
   // job -> run -> event levels
   constexpr auto index_limit = 2u;

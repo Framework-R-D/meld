@@ -11,7 +11,7 @@
 //      |       |
 //     print_result [also includes output module]
 //
-// where the asterisk (*) indicates a reduction step.  In terms of the data model,
+// where the asterisk (*) indicates a fold step.  In terms of the data model,
 // whenever the add node receives the flush token, a product is inserted at one level
 // higher than the level processed by square and add nodes.
 // =======================================================================================

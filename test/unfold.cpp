@@ -9,7 +9,7 @@
 //          |
 //     print_result
 //
-// where the asterisk (*) indicates a reduction step.  The difference here is that the
+// where the asterisk (*) indicates a fold step.  The difference here is that the
 // *unfold* is responsible for sending the flush token instead of the
 // source/multiplexer.
 // =======================================================================================

@@ -8,7 +8,7 @@
 
 - [ ] Function registration without function names
   - [x] Implement basic facility
-  - [ ] Figure out how to handle reductions
+  - [ ] Figure out how to handle folds
   - [ ] Implement tests that mandate an explicit name if the same function is registered twice
 - [ ] Add `react_to(...)` and `produces(...)` blurbs for all inputs/outputs that are products?
   - [ ] What about `react_to_many`?  Is there a `react_to_many`?

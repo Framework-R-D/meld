@@ -3,7 +3,7 @@
 
 #include "meld/configuration.hpp"
 #include "meld/core/cached_product_stores.hpp"
-#include "meld/core/declared_reduction.hpp"
+#include "meld/core/declared_fold.hpp"
 #include "meld/core/declared_unfold.hpp"
 #include "meld/core/end_of_message.hpp"
 #include "meld/core/filter.hpp"

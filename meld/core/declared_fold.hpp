@@ -1,14 +1,14 @@
-#ifndef meld_core_declared_reduction_hpp
-#define meld_core_declared_reduction_hpp
+#ifndef meld_core_declared_fold_hpp
+#define meld_core_declared_fold_hpp
 
 #include "meld/concurrency.hpp"
 #include "meld/core/concepts.hpp"
 #include "meld/core/detail/port_names.hpp"
+#include "meld/core/fold/send.hpp"
 #include "meld/core/fwd.hpp"
 #include "meld/core/message.hpp"
 #include "meld/core/node_options.hpp"
 #include "meld/core/products_consumer.hpp"
-#include "meld/core/reduction/send.hpp"
 #include "meld/core/registrar.hpp"
 #include "meld/core/store_counters.hpp"
 #include "meld/model/algorithm_name.hpp"
@@ -36,10 +36,10 @@
 #include <utility>
 
 namespace meld {
-  class declared_reduction : public products_consumer {
+  class declared_fold : public products_consumer {
   public:
-    declared_reduction(algorithm_name name, std::vector<std::string> predicates);
-    virtual ~declared_reduction();
+    declared_fold(algorithm_name name, std::vector<std::string> predicates);
+    virtual ~declared_fold();
 
     virtual tbb::flow::sender<message>& sender() = 0;
     virtual tbb::flow::sender<message>& to_output() = 0;
@@ -47,15 +47,14 @@ namespace meld {
     virtual std::size_t product_count() const = 0;
   };
 
-  using declared_reduction_ptr = std::unique_ptr<declared_reduction>;
-  using declared_reductions = std::map<std::string, declared_reduction_ptr>;
+  using declared_fold_ptr = std::unique_ptr<declared_fold>;
+  using declared_folds = std::map<std::string, declared_fold_ptr>;
 
-  // Registering concrete reductions
+  // Registering concrete folds
 
-  template <is_reduction_like FT, typename InputArgs>
-  class pre_reduction {
-    using input_parameter_types =
-      skip_first_type<function_parameter_types<FT>>; // Skip reduction object
+  template <is_fold_like FT, typename InputArgs>
+  class pre_fold {
+    using input_parameter_types = skip_first_type<function_parameter_types<FT>>; // Skip fold object
     static constexpr auto N = std::tuple_size_v<input_parameter_types>;
     using R = std::decay_t<std::tuple_element_t<0, function_parameter_types<FT>>>;
 
@@ -63,16 +62,16 @@ namespace meld {
     using function_t = FT;
 
     template <typename InitTuple>
-    class total_reduction;
+    class total_fold;
 
   public:
-    pre_reduction(registrar<declared_reductions> reg,
-                  algorithm_name name,
-                  std::size_t concurrency,
-                  std::vector<std::string> predicates,
-                  tbb::flow::graph& g,
-                  function_t&& f,
-                  InputArgs input_args) :
+    pre_fold(registrar<declared_folds> reg,
+             algorithm_name name,
+             std::size_t concurrency,
+             std::vector<std::string> predicates,
+             tbb::flow::graph& g,
+             function_t&& f,
+             InputArgs input_args) :
       name_{std::move(name)},
       concurrency_{concurrency},
       predicates_{std::move(predicates)},
@@ -107,7 +106,7 @@ namespace meld {
 
     auto& for_each(std::string const& level_name)
     {
-      reduction_interval_ = level_name;
+      fold_interval_ = level_name;
       return *this;
     }
 
@@ -119,22 +118,21 @@ namespace meld {
 
   private:
     template <typename T>
-    declared_reduction_ptr create(T init)
+    declared_fold_ptr create(T init)
     {
-      if (empty(reduction_interval_)) {
-        throw std::runtime_error(
-          "The reduction range must be specified using the 'over(...)' syntax.");
+      if (empty(fold_interval_)) {
+        throw std::runtime_error("The fold range must be specified using the 'over(...)' syntax.");
       }
-      return std::make_unique<total_reduction<decltype(init)>>(std::move(name_),
-                                                               concurrency_,
-                                                               std::move(predicates_),
-                                                               graph_,
-                                                               std::move(ft_),
-                                                               std::move(init),
-                                                               std::move(input_args_),
-                                                               std::move(product_labels_),
-                                                               std::move(output_names_),
-                                                               std::move(reduction_interval_));
+      return std::make_unique<total_fold<decltype(init)>>(std::move(name_),
+                                                          concurrency_,
+                                                          std::move(predicates_),
+                                                          graph_,
+                                                          std::move(ft_),
+                                                          std::move(init),
+                                                          std::move(input_args_),
+                                                          std::move(product_labels_),
+                                                          std::move(output_names_),
+                                                          std::move(fold_interval_));
     }
 
     algorithm_name name_;
@@ -144,59 +142,56 @@ namespace meld {
     function_t ft_;
     InputArgs input_args_;
     std::array<specified_label, N> product_labels_;
-    std::string reduction_interval_{level_id::base().level_name()};
+    std::string fold_interval_{level_id::base().level_name()};
     std::array<qualified_name, M> output_names_;
-    registrar<declared_reductions> reg_;
+    registrar<declared_folds> reg_;
   };
 
-  template <is_reduction_like FT, typename InputArgs>
+  template <is_fold_like FT, typename InputArgs>
   template <typename InitTuple>
-  class pre_reduction<FT, InputArgs>::total_reduction :
-    public declared_reduction,
-    private count_stores {
+  class pre_fold<FT, InputArgs>::total_fold : public declared_fold, private count_stores {
 
   public:
-    total_reduction(algorithm_name name,
-                    std::size_t concurrency,
-                    std::vector<std::string> predicates,
-                    tbb::flow::graph& g,
-                    function_t&& f,
-                    InitTuple initializer,
-                    InputArgs input,
-                    std::array<specified_label, N> product_labels,
-                    std::array<qualified_name, M> output,
-                    std::string reduction_interval) :
-      declared_reduction{std::move(name), std::move(predicates)},
+    total_fold(algorithm_name name,
+               std::size_t concurrency,
+               std::vector<std::string> predicates,
+               tbb::flow::graph& g,
+               function_t&& f,
+               InitTuple initializer,
+               InputArgs input,
+               std::array<specified_label, N> product_labels,
+               std::array<qualified_name, M> output,
+               std::string fold_interval) :
+      declared_fold{std::move(name), std::move(predicates)},
       initializer_{std::move(initializer)},
       product_labels_{std::move(product_labels)},
       input_{std::move(input)},
       output_{std::move(output)},
-      reduction_interval_{std::move(reduction_interval)},
+      fold_interval_{std::move(fold_interval)},
       join_{make_join_or_none(g, std::make_index_sequence<N>{})},
-      reduction_{
+      fold_{
         g, concurrency, [this, ft = std::move(f)](messages_t<N> const& messages, auto& outputs) {
-          // N.B. The assumption is that a reduction will *never* need to cache
+          // N.B. The assumption is that a fold will *never* need to cache
           //      the product store it creates.  Any flush messages *do not* need
           //      to be propagated to downstream nodes.
           auto const& msg = most_derived(messages);
           auto const& [store, original_message_id] = std::tie(msg.store, msg.original_id);
 
-          if (not store->is_flush() and not store->id()->parent(reduction_interval_)) {
+          if (not store->is_flush() and not store->id()->parent(fold_interval_)) {
             return;
           }
 
           if (store->is_flush()) {
             // Downstream nodes always get the flush.
             get<0>(outputs).try_put(msg);
-            if (store->id()->level_name() != reduction_interval_) {
+            if (store->id()->level_name() != fold_interval_) {
               return;
             }
           }
 
-          auto const& reduction_store =
-            store->is_flush() ? store : store->parent(reduction_interval_);
-          assert(reduction_store);
-          auto const& id_hash_for_counter = reduction_store->id()->hash();
+          auto const& fold_store = store->is_flush() ? store : store->parent(fold_interval_);
+          assert(fold_store);
+          auto const& id_hash_for_counter = fold_store->id()->hash();
 
           if (store->is_flush()) {
             counter_for(id_hash_for_counter).set_flush_value(store, original_message_id);
@@ -207,7 +202,7 @@ namespace meld {
           }
 
           if (auto counter = done_with(id_hash_for_counter)) {
-            auto parent = reduction_store->make_continuation(this->full_name());
+            auto parent = fold_store->make_continuation(this->full_name());
             commit_(*parent);
             ++product_count_;
             // FIXME: This msg.eom value may be wrong!
@@ -215,7 +210,7 @@ namespace meld {
           }
         }}
     {
-      make_edge(join_, reduction_);
+      make_edge(join_, fold_);
     }
 
   private:
@@ -226,7 +221,7 @@ namespace meld {
 
     std::vector<tbb::flow::receiver<message>*> ports() override { return input_ports<N>(join_); }
 
-    tbb::flow::sender<message>& sender() override { return output_port<0ull>(reduction_); }
+    tbb::flow::sender<message>& sender() override { return output_port<0ull>(fold_); }
     tbb::flow::sender<message>& to_output() override { return sender(); }
     specified_labels input() const override { return product_labels_; }
     qualified_names output() const override { return output_; }
@@ -234,7 +229,7 @@ namespace meld {
     template <std::size_t... Is>
     void call(function_t const& ft, messages_t<N> const& messages, std::index_sequence<Is...>)
     {
-      auto const& parent_id = *most_derived(messages).store->id()->parent(reduction_interval_);
+      auto const& parent_id = *most_derived(messages).store->id()->parent(fold_interval_);
       // FIXME: Not the safest approach!
       auto it = results_.find(parent_id);
       if (it == results_.end()) {
@@ -277,13 +272,13 @@ namespace meld {
     std::array<specified_label, N> product_labels_;
     InputArgs input_;
     std::array<qualified_name, M> output_;
-    std::string reduction_interval_;
+    std::string fold_interval_;
     join_or_none_t<N> join_;
-    tbb::flow::multifunction_node<messages_t<N>, messages_t<1>> reduction_;
+    tbb::flow::multifunction_node<messages_t<N>, messages_t<1>> fold_;
     tbb::concurrent_unordered_map<level_id, std::unique_ptr<R>> results_;
     std::atomic<std::size_t> calls_;
     std::atomic<std::size_t> product_count_;
   };
 }
 
-#endif // meld_core_declared_reduction_hpp
+#endif // meld_core_declared_fold_hpp
