@@ -12,9 +12,9 @@ namespace meld::test {
     void save(product_store const& store) const
     {
       std::ostringstream oss;
-      oss << "Saving data for " << store.id() << " from " << store.source() << '\n';
+      oss << "Saving data for store id: " << store.id() << " from source: " << store.source();
       for (auto const& [product_name, _] : store) {
-        oss << " -> Product name: " << product_name << '\n';
+        oss << "\n -> Product name: " << product_name;
       }
       spdlog::debug(oss.str());
     }
