@@ -150,7 +150,6 @@ namespace meld {
   template <is_fold_like FT, typename InputArgs>
   template <typename InitTuple>
   class pre_fold<FT, InputArgs>::total_fold : public declared_fold, private count_stores {
-
   public:
     total_fold(algorithm_name name,
                std::size_t concurrency,
