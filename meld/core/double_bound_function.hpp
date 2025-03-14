@@ -25,8 +25,6 @@ namespace meld {
     public node_options<double_bound_function<Object, Predicate, Unfold>> {
     using node_options_t = node_options<double_bound_function<Object, Predicate, Unfold>>;
     using input_parameter_types = constructor_parameter_types<Object>;
-    static_assert(
-      std::same_as<function_parameter_types<Predicate>, function_parameter_types<Unfold>>);
 
   public:
     static constexpr auto N = number_parameters<Predicate>;
