@@ -212,7 +212,7 @@ int main()
        return wg.op(running_value, chunksize);
      },
      concurrency::unlimited)
-    .split("wgen")         // create an unfold node
+    .unfold("wgen")        // the type of node to create
     .into("waves_in_apa")  // label the chunks we create as "waves_in_apa"
     .within_family("APA"); // put the chunks into a data set category called "APA"
 
