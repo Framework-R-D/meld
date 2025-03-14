@@ -18,8 +18,8 @@
                                   |
                            verify_two_layer_job_sum
 
-   where the asterisk (*) indicates a reduction step over the full job, and the caret (^)
-   represents a reduction step over each run.
+   where the asterisk (*) indicates a fold step over the full job, and the caret (^)
+   represents a fold step over each run.
 */
 // =======================================================================================
 
@@ -41,7 +41,7 @@ namespace {
   void add(std::atomic<unsigned int>& counter, unsigned int number) { counter += number; }
 }
 
-TEST_CASE("Different levels of reduction", "[graph]")
+TEST_CASE("Different levels of fold", "[graph]")
 {
   constexpr auto index_limit = 2u;
   constexpr auto number_limit = 5u;

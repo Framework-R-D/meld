@@ -82,7 +82,7 @@ TEST_CASE("Serialize functions based on resource", "[multithreading]")
   g.wait_for_all();
 }
 
-TEST_CASE("Serialize functions in split/merge graph", "[multithreading]")
+TEST_CASE("Serialize functions in unfold/merge graph", "[multithreading]")
 {
   flow::graph g;
   flow::input_node src{g, [i = 0u](flow_control& fc) mutable {

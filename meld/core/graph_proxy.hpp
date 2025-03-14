@@ -56,7 +56,7 @@ namespace meld {
     template <typename Splitter>
     auto with(auto predicate, auto unfold, concurrency c = concurrency::serial)
     {
-      return splitter_glue<Splitter>(graph_, nodes_, errors_).declare_unfold(predicate, unfold, c);
+      return unfold_glue<Splitter>(graph_, nodes_, errors_).declare_unfold(predicate, unfold, c);
     }
 
     auto output_with(std::string name, is_output_like auto f, concurrency c = concurrency::serial)

@@ -1,5 +1,5 @@
-#ifndef meld_core_declared_splitter_hpp
-#define meld_core_declared_splitter_hpp
+#ifndef meld_core_declared_unfold_hpp
+#define meld_core_declared_unfold_hpp
 
 #include "meld/core/concepts.hpp"
 #include "meld/core/detail/port_names.hpp"
@@ -58,10 +58,10 @@ namespace meld {
     std::map<level_id::hash_type, std::size_t> child_counts_;
   };
 
-  class declared_splitter : public products_consumer {
+  class declared_unfold : public products_consumer {
   public:
-    declared_splitter(algorithm_name name, std::vector<std::string> predicates);
-    virtual ~declared_splitter();
+    declared_unfold(algorithm_name name, std::vector<std::string> predicates);
+    virtual ~declared_unfold();
 
     virtual tbb::flow::sender<message>& to_output() = 0;
     virtual qualified_names output() const = 0;
@@ -70,27 +70,27 @@ namespace meld {
     virtual multiplexer::head_ports_t const& downstream_ports() const = 0;
   };
 
-  using declared_splitter_ptr = std::unique_ptr<declared_splitter>;
-  using declared_splitters = std::map<std::string, declared_splitter_ptr>;
+  using declared_unfold_ptr = std::unique_ptr<declared_unfold>;
+  using declared_unfolds = std::map<std::string, declared_unfold_ptr>;
 
   // =====================================================================================
 
   template <typename Object, typename Predicate, typename Unfold, typename InputArgs>
-  class partial_splitter {
+  class partial_unfold {
     static constexpr std::size_t N = std::tuple_size_v<InputArgs>;
 
     template <std::size_t M>
-    class complete_splitter;
+    class complete_unfold;
 
   public:
-    partial_splitter(registrar<declared_splitters> reg,
-                     algorithm_name name,
-                     std::size_t concurrency,
-                     std::vector<std::string> predicates,
-                     tbb::flow::graph& g,
-                     Predicate&& predicate,
-                     Unfold&& unfold,
-                     InputArgs input_args) :
+    partial_unfold(registrar<declared_unfolds> reg,
+                   algorithm_name name,
+                   std::size_t concurrency,
+                   std::vector<std::string> predicates,
+                   tbb::flow::graph& g,
+                   Predicate&& predicate,
+                   Unfold&& unfold,
+                   InputArgs input_args) :
       name_{std::move(name)},
       concurrency_{concurrency},
       predicates_{std::move(predicates)},
@@ -125,18 +125,18 @@ namespace meld {
 
   private:
     template <std::size_t M>
-    declared_splitter_ptr create(std::array<qualified_name, M> outputs)
+    declared_unfold_ptr create(std::array<qualified_name, M> outputs)
     {
-      return std::make_unique<complete_splitter<M>>(std::move(name_),
-                                                    concurrency_,
-                                                    std::move(predicates_),
-                                                    graph_,
-                                                    std::move(predicate_),
-                                                    std::move(unfold_),
-                                                    std::move(input_args_),
-                                                    std::move(product_labels_),
-                                                    std::move(outputs),
-                                                    std::move(new_level_name_));
+      return std::make_unique<complete_unfold<M>>(std::move(name_),
+                                                  concurrency_,
+                                                  std::move(predicates_),
+                                                  graph_,
+                                                  std::move(predicate_),
+                                                  std::move(unfold_),
+                                                  std::move(input_args_),
+                                                  std::move(product_labels_),
+                                                  std::move(outputs),
+                                                  std::move(new_level_name_));
     }
 
     algorithm_name name_;
@@ -148,68 +148,68 @@ namespace meld {
     InputArgs input_args_;
     std::array<specified_label, N> product_labels_;
     std::string new_level_name_;
-    registrar<declared_splitters> reg_;
+    registrar<declared_unfolds> reg_;
   };
 
   // =====================================================================================
 
   template <typename Object, typename Predicate, typename Unfold, typename InputArgs>
   template <std::size_t M>
-  class partial_splitter<Object, Predicate, Unfold, InputArgs>::complete_splitter :
-    public declared_splitter,
+  class partial_unfold<Object, Predicate, Unfold, InputArgs>::complete_unfold :
+    public declared_unfold,
     private detect_flush_flag {
     using stores_t = tbb::concurrent_hash_map<level_id::hash_type, product_store_ptr>;
     using accessor = stores_t::accessor;
     using const_accessor = stores_t::const_accessor;
 
   public:
-    complete_splitter(algorithm_name name,
-                      std::size_t concurrency,
-                      std::vector<std::string> predicates,
-                      tbb::flow::graph& g,
-                      Predicate&& predicate,
-                      Unfold&& unfold,
-                      InputArgs input,
-                      std::array<specified_label, N> product_labels,
-                      std::array<qualified_name, M> output_products,
-                      std::string new_level_name) :
-      declared_splitter{std::move(name), std::move(predicates)},
+    complete_unfold(algorithm_name name,
+                    std::size_t concurrency,
+                    std::vector<std::string> predicates,
+                    tbb::flow::graph& g,
+                    Predicate&& predicate,
+                    Unfold&& unfold,
+                    InputArgs input,
+                    std::array<specified_label, N> product_labels,
+                    std::array<qualified_name, M> output_products,
+                    std::string new_level_name) :
+      declared_unfold{std::move(name), std::move(predicates)},
       product_labels_{std::move(product_labels)},
       input_{std::move(input)},
       output_{std::move(output_products)},
       new_level_name_{std::move(new_level_name)},
       multiplexer_{g},
       join_{make_join_or_none(g, std::make_index_sequence<N>{})},
-      splitter_{g,
-                concurrency,
-                [this, p = std::move(predicate), ufold = std::move(unfold)](
-                  messages_t<N> const& messages) -> tbb::flow::continue_msg {
-                  auto const& msg = most_derived(messages);
-                  auto const& store = msg.store;
-                  if (store->is_flush()) {
-                    flag_for(store->id()->hash()).flush_received(msg.id);
-                  }
-                  else if (accessor a; stores_.insert(a, store->id()->hash())) {
-                    std::size_t const original_message_id{msg_counter_};
-                    generator g{msg.store, this->full_name(), new_level_name_};
-                    call(p, ufold, g, msg.eom, messages, std::make_index_sequence<N>{});
-                    multiplexer_.try_put(
-                      {g.flush_store(), msg.eom, ++msg_counter_, original_message_id});
-                    flag_for(store->id()->hash()).mark_as_processed();
-                  }
+      unfold_{g,
+              concurrency,
+              [this, p = std::move(predicate), ufold = std::move(unfold)](
+                messages_t<N> const& messages) -> tbb::flow::continue_msg {
+                auto const& msg = most_derived(messages);
+                auto const& store = msg.store;
+                if (store->is_flush()) {
+                  flag_for(store->id()->hash()).flush_received(msg.id);
+                }
+                else if (accessor a; stores_.insert(a, store->id()->hash())) {
+                  std::size_t const original_message_id{msg_counter_};
+                  generator g{msg.store, this->full_name(), new_level_name_};
+                  call(p, ufold, g, msg.eom, messages, std::make_index_sequence<N>{});
+                  multiplexer_.try_put(
+                    {g.flush_store(), msg.eom, ++msg_counter_, original_message_id});
+                  flag_for(store->id()->hash()).mark_as_processed();
+                }
 
-                  if (done_with(store)) {
-                    stores_.erase(store->id()->hash());
-                  }
-                  return {};
-                }},
+                if (done_with(store)) {
+                  stores_.erase(store->id()->hash());
+                }
+                return {};
+              }},
       to_output_{g}
     {
-      make_edge(join_, splitter_);
+      make_edge(join_, unfold_);
       make_edge(to_output_, multiplexer_);
     }
 
-    ~complete_splitter()
+    ~complete_unfold()
     {
       if (stores_.size() > 0ull) {
         spdlog::warn("Unfold {} has {} cached stores.", full_name(), stores_.size());
@@ -273,7 +273,7 @@ namespace meld {
     std::string new_level_name_;
     multiplexer multiplexer_;
     join_or_none_t<N> join_;
-    tbb::flow::function_node<messages_t<N>> splitter_;
+    tbb::flow::function_node<messages_t<N>> unfold_;
     tbb::flow::broadcast_node<message> to_output_;
     tbb::concurrent_hash_map<level_id::hash_type, product_store_ptr> stores_;
     std::atomic<std::size_t> msg_counter_{}; // Is this sufficient?  Probably not.
@@ -282,4 +282,4 @@ namespace meld {
   };
 }
 
-#endif // meld_core_declared_splitter_hpp
+#endif // meld_core_declared_unfold_hpp

@@ -52,5 +52,5 @@ TEST_CASE("Handle type conversions (run-time checks)", "[data model]")
   CHECK(*num_ptr == 3);
 
   product<Composer> const composer{{"Elgar"}};
-  CHECK(handle { composer } -> name == "Elgar");
+  CHECK(handle{composer}->name == "Elgar");
 }

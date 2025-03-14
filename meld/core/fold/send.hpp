@@ -1,8 +1,8 @@
-#ifndef meld_core_reduction_send_hpp
-#define meld_core_reduction_send_hpp
+#ifndef meld_core_fold_send_hpp
+#define meld_core_fold_send_hpp
 
 // =======================================================================================
-// Meld requires reduction results to be "sendable", where the result can be represented
+// Meld requires fold results to be "sendable", where the result can be represented
 // as a data product that is at least moveable.  For some types, notably std::atomic<T>
 // specializations, move operations are not supported.  The framework thus permits a
 // translation step where a non-moveable type can be converted to a type that is moveable.
@@ -22,4 +22,4 @@ namespace meld {
   }
 }
 
-#endif // meld_core_reduction_send_hpp
+#endif // meld_core_fold_send_hpp

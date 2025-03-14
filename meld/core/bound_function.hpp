@@ -4,9 +4,9 @@
 #include "meld/concurrency.hpp"
 #include "meld/configuration.hpp"
 #include "meld/core/concepts.hpp"
+#include "meld/core/declared_fold.hpp"
 #include "meld/core/declared_observer.hpp"
 #include "meld/core/declared_predicate.hpp"
-#include "meld/core/declared_reduction.hpp"
 #include "meld/core/declared_transform.hpp"
 #include "meld/core/node_catalog.hpp"
 #include "meld/core/node_options.hpp"
@@ -90,17 +90,17 @@ namespace meld {
     }
 
     auto reduce(std::array<specified_label, N - 1> input_args)
-      requires is_reduction_like<FT>
+      requires is_fold_like<FT>
     {
       using all_but_first = skip_first_type<input_parameter_types>;
       auto inputs = form_input_arguments<all_but_first>(name_.full(), std::move(input_args));
-      return pre_reduction{nodes_.register_reduction(errors_),
-                           std::move(name_),
-                           concurrency_.value,
-                           node_options_t::release_predicates(),
-                           graph_,
-                           delegate(obj_, ft_),
-                           std::move(inputs)};
+      return pre_fold{nodes_.register_fold(errors_),
+                      std::move(name_),
+                      concurrency_.value,
+                      node_options_t::release_predicates(),
+                      graph_,
+                      delegate(obj_, ft_),
+                      std::move(inputs)};
     }
 
     template <label_compatible L>

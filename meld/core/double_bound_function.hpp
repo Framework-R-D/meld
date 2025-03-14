@@ -48,13 +48,13 @@ namespace meld {
     {
     }
 
-    auto split(std::array<specified_label, N> input_args)
+    auto unfold(std::array<specified_label, N> input_args)
     {
       auto processed_input_args =
         form_input_arguments<input_parameter_types>(name_.full(), std::move(input_args));
 
-      return partial_splitter<Object, Predicate, Unfold, decltype(processed_input_args)>{
-        nodes_.register_splitter(errors_),
+      return partial_unfold<Object, Predicate, Unfold, decltype(processed_input_args)>{
+        nodes_.register_unfold(errors_),
         std::move(name_),
         concurrency_,
         node_options_t::release_predicates(),
@@ -64,12 +64,12 @@ namespace meld {
         std::move(processed_input_args)};
     }
 
-    auto split(label_compatible auto... input_args)
+    auto unfold(label_compatible auto... input_args)
     {
       static_assert(N == sizeof...(input_args),
                     "The number of function parameters is not the same as the number of specified "
                     "input arguments.");
-      return split({specified_label{std::forward<decltype(input_args)>(input_args)}...});
+      return unfold({specified_label{std::forward<decltype(input_args)>(input_args)}...});
     }
 
   private:

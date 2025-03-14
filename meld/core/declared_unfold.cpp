@@ -1,4 +1,4 @@
-#include "meld/core/declared_splitter.hpp"
+#include "meld/core/declared_unfold.hpp"
 #include "meld/model/handle.hpp"
 #include "meld/model/level_counter.hpp"
 
@@ -30,10 +30,10 @@ namespace meld {
     return result;
   }
 
-  declared_splitter::declared_splitter(algorithm_name name, std::vector<std::string> predicates) :
+  declared_unfold::declared_unfold(algorithm_name name, std::vector<std::string> predicates) :
     products_consumer{std::move(name), std::move(predicates)}
   {
   }
 
-  declared_splitter::~declared_splitter() = default;
+  declared_unfold::~declared_unfold() = default;
 }

@@ -76,12 +76,12 @@ namespace meld {
   };
 
   template <typename T>
-  class splitter_glue {
+  class unfold_glue {
   public:
-    splitter_glue(tbb::flow::graph& g,
-                  node_catalog& nodes,
-                  std::vector<std::string>& errors,
-                  configuration const* config = nullptr) :
+    unfold_glue(tbb::flow::graph& g,
+                node_catalog& nodes,
+                std::vector<std::string>& errors,
+                configuration const* config = nullptr) :
       graph_{g}, nodes_{nodes}, errors_{errors}, config_{config}
     {
     }
