@@ -16,14 +16,16 @@ using namespace meld;
 
 namespace {
 
-  // void log_record(char const* event,
-  //                 int spill_id,
-  //                 int apa_id,
-  //                 void const* product,
-  //                 std::size_t size,
-  //                 void const* orig)
-  // {
-  // }
+  void log_record(char const* event,
+                  std::size_t spill_id,
+                  std::size_t apa_id,
+                  void const* product,
+                  std::size_t size,
+                  void const* orig)
+  {
+    spdlog::info("{}\t{}\t{}\t{}\t{}\t{}", event, spill_id, apa_id, product, size, orig);
+  }
+
   struct Waveform {
     // We should be set to the number of samples on a wire.
     std::array<double, 8 * 1024> samples;
@@ -38,22 +40,19 @@ namespace {
     Waveforms(std::size_t n, double val, int spill_id, int apa_id) :
       waveforms(n, {val}), spill_id(spill_id), apa_id(apa_id)
     {
-      spdlog::info(
-        "wsctor\t{}\t{}\t{}\t{}", spill_id, apa_id, static_cast<void*>(this), waveforms.size());
+      log_record("wsctor", spill_id, apa_id, this, n, nullptr);
     }
 
     Waveforms(Waveforms const& other) :
       waveforms(other.waveforms), spill_id(other.spill_id), apa_id(other.apa_id)
     {
-      spdlog::info(
-        "wscopy\t{}\t{}\t{}\t{}", spill_id, apa_id, static_cast<void*>(this), waveforms.size());
+      log_record("wscopy", spill_id, apa_id, this, waveforms.size(), &other);
     }
 
     Waveforms(Waveforms&& other) :
       waveforms(std::move(other.waveforms)), spill_id(other.spill_id), apa_id(other.apa_id)
     {
-      spdlog::info(
-        "wsmove\t{}\t{}\t{}\t{}", spill_id, apa_id, static_cast<void*>(this), waveforms.size());
+      log_record("wsmove", spill_id, apa_id, this, waveforms.size(), &other);
     }
 
     // instrument copy assignment and move assignment
@@ -62,8 +61,7 @@ namespace {
       waveforms = other.waveforms;
       spill_id = other.spill_id;
       apa_id = other.apa_id;
-      spdlog::info(
-        "wscopy=\t{}\t{}\t{}\t{}", spill_id, apa_id, static_cast<void*>(this), waveforms.size());
+      log_record("wscopy=", spill_id, apa_id, this, waveforms.size(), &other);
       return *this;
     }
 
@@ -72,16 +70,11 @@ namespace {
       waveforms = std::move(other.waveforms);
       spill_id = other.spill_id;
       apa_id = other.apa_id;
-      spdlog::info(
-        "wsmove=\t{}\t{}\t{}\t{}", spill_id, apa_id, static_cast<void*>(this), waveforms.size());
+      log_record("wsmove=", spill_id, apa_id, this, waveforms.size(), &other);
       return *this;
     }
 
-    ~Waveforms()
-    {
-      spdlog::info(
-        "wsdtor\t{}\t{}\t{}\t{}", spill_id, apa_id, static_cast<void*>(this), waveforms.size());
-    };
+    ~Waveforms() { log_record("wsdtor", spill_id, apa_id, this, waveforms.size(), nullptr); };
   };
 
   // This is the data product that our unfold node will receive from each spill.
@@ -102,7 +95,7 @@ namespace {
     //  chunksize.
     explicit WaveformGenerator(WGI const& maxsize) : maxsize_{maxsize.size}
     {
-      spdlog::info("Constructed a new WaveformGenerator with maxsize = {}", maxsize.size);
+      log_record("wgc_ctor", 0, 0, this, 0, nullptr);
     }
 
     // The initial value of the count of how many waveforms we have made so far.
@@ -114,8 +107,7 @@ namespace {
     bool predicate(std::size_t made_so_far) const
     {
       bool const result = made_so_far < maxsize_;
-      spdlog::info(
-        "predicate: made_so_far = {}, maxsize_ = {}, result = {}", made_so_far, maxsize_, result);
+      log_record("pred", 0, 0, this, made_so_far, nullptr);
       return result;
     }
 
@@ -127,8 +119,7 @@ namespace {
       std::size_t const newsize = std::min(chunksize, maxsize_ - made_so_far);
       auto result =
         std::make_pair(made_so_far + newsize, Waveforms{newsize, 1.0 * made_so_far, 0, 0});
-      spdlog::info(
-        "op: made_so_far = {}, chunksize = {}, ws.size() = {}", made_so_far, chunksize, newsize);
+      log_record("op", 0, 0, this, newsize, nullptr);
       return result;
     }
 
@@ -143,13 +134,13 @@ int main()
   auto tsvlog = spdlog::basic_logger_mt("tsvlog", "unfold_transform_fold.tsv");
   spdlog::set_default_logger(tsvlog);
   spdlog::set_pattern("%v"); // output only the message, no metadata.
-  spdlog::info("time\tthread\tevent\tnode\tmessage\tdata");
+  spdlog::info("time\tthread\tevent\tspill\tapa\tactive\tdata\tother");
   spdlog::set_pattern("%H:%M:%S.%f\t%t\t%v");
 
   // Constants that configure the work load.
   //constexpr auto wires_per_spill = 150 * 10 * 1000ul;
-  constexpr auto wires_per_spill = 10 * 1000ul;
-  constexpr auto number_of_spills = 2u;
+  constexpr auto wires_per_spill = 350 * 1000ul;
+  constexpr auto number_of_spills = 10u;
 
   // Create some levels of the data set categories hierarchy.
   // We may or may not want to create pre-generated data set categories like this.
@@ -185,7 +176,7 @@ int main()
     if (store->id()->level_name() == "spill") {
       // Put the WGI product into the spill, so that our CHOF can find it.
       auto next_size = wires_per_spill;
-      spdlog::info("Adding WGI to spill {} with count = {}", store->id()->hash(), next_size);
+      log_record("add_wgi", store->id()->hash(), 0, &store, next_size, nullptr);
       store->add_product<WGI>("wgen", {next_size});
       ++counter;
     }
@@ -193,7 +184,7 @@ int main()
   };
 
   // Create the graph. The source tells us what data we will process.
-  spdlog::info("Creating the graph");
+  log_record("create_graph", 0, 0, nullptr, 0, nullptr);
   framework_graph g{source};
 
   // g.with<X> is "registration code" as implemented in meld.
@@ -201,7 +192,7 @@ int main()
 
   // Add the unfold node to the graph. We do not yet know how to provide the chunksize
   // to the constructor of the WaveformGenerator, so we will use the default value.
-  spdlog::info("Adding the unfold node");
+  log_record("add_unfold", 0, 0, nullptr, 0, nullptr);
   auto const chunksize = 10 * 1000ULL; // this could be read from a configuration file
   // auto unfold_op = [](WaveformGenerator& wg, std::size_t running_value) {
   //   return wg.op(running_value, chunksize);
@@ -216,12 +207,12 @@ int main()
     .into("waves_in_apa")  // label the chunks we create as "waves_in_apa"
     .within_family("APA"); // put the chunks into a data set category called "APA"
 
-  spdlog::info("Adding the output node");
+  log_record("add_output", 0, 0, nullptr, 0, nullptr);
   g.make<test::products_for_output>().output_with(&test::products_for_output::save,
                                                   concurrency::serial);
 
   // Execute the graph.
-  spdlog::info("Executing the graph");
-  g.execute("unford_transform_fold");
-  spdlog::info("Done");
+  log_record("execute_graph", 0, 0, nullptr, 0, nullptr);
+  g.execute("unfold_transform_fold");
+  log_record("done", 0, 0, nullptr, 0, nullptr);
 }
