@@ -19,11 +19,11 @@ namespace {
   void log_record(char const* event,
                   std::size_t spill_id,
                   std::size_t apa_id,
-                  void const* product,
-                  std::size_t size,
+                  void const* active,
+                  std::size_t data,
                   void const* orig)
   {
-    spdlog::info("{}\t{}\t{}\t{}\t{}\t{}", event, spill_id, apa_id, product, size, orig);
+    spdlog::info("{}\t{}\t{}\t{}\t{}\t{}", event, spill_id, apa_id, active, data, orig);
   }
 
   struct Waveform {
