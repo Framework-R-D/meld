@@ -44,7 +44,7 @@ These instructions have only been tested with a fresh installation, meaning ther
 
 ```console
 $ cd <some scratch area>
-$ git clone -b fnal_develop git@github.com:FNALssi/spack.git
+$ git clone -b fnal_develop git@github.com:FNALssi/spack.git spack-fnal  # name to match the instructions above
 $ git clone -b develop git@github.com:FNALssi/fnal_art.git
 $ git clone git@github.com:FNALssi/spack-mpd.git
 $ source spack/share/spack/setup-env.sh
@@ -96,3 +96,9 @@ $ spack mpd build -j12
 $ ...
 $ spack mpd test -j12
 ```
+
+## Additional notes
+
+The `spack mpd` commands will activate and deactive an environment as needed.
+If you want to activate the environment manually, use the `spack env activate` command, giving it the path to the environment.
+The `spack mpd build` command will notify you if you are using an already-activated environment or one it activates for you.
