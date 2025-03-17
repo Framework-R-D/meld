@@ -64,7 +64,7 @@ int main()
     if (store->id()->level_name() == "spill") {
       // Put the WGI product into the spill, so that our CHOF can find it.
       auto next_size = wires_per_spill;
-      demo::log_record("add_wgi", store->id()->hash(), 0, &store, next_size, nullptr);
+      demo::log_record("add_wgi", store->id()->number(), 0, &store, next_size, nullptr);
       store->add_product<demo::WGI>("wgen", {next_size});
       ++counter;
     }
@@ -101,6 +101,13 @@ int main()
     .transform("waves_in_apa") // the type of node to create, and the label of the input
     .for_each("APA")
     .to("clamped_waves"); // label the chunks we create as "clamped_waves"
+
+  // Add the fold node to the graph.
+  demo::log_record("add_fold", 0, 0, nullptr, 0, nullptr);
+  g.with("accum_for_spill", demo::accumulateSCW, concurrency::unlimited)
+    .reduce("clamped_waves"_in("APA"))
+    .to("summed_waveforms")
+    .for_each("spill");
 
   demo::log_record("add_output", 0, 0, nullptr, 0, nullptr);
   g.make<test::products_for_output>().output_with(&test::products_for_output::save,

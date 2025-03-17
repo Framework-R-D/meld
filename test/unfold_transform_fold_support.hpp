@@ -65,6 +65,12 @@ namespace demo {
     std::size_t size;
   };
 
+  // This is the data product created by our fold node.
+  struct SummedClampedWaveforms {
+    std::size_t size = 0;
+    double sum = 0.0;
+  };
+
   using WGI = WaveformGeneratorInput;
 
   // This is a class that provides unfold operation and a predicate to control
@@ -114,7 +120,7 @@ namespace demo {
 
   // This function is used to transform an input Waveforms object into an
   // output Waveforms object. The output is a clamped version of the input.
-  Waveforms clampWaveforms(Waveforms const& input)
+  inline Waveforms clampWaveforms(Waveforms const& input)
   {
     log_record("start_clamp", input.spill_id, input.apa_id, &input, input.size(), nullptr);
     Waveforms result(input);
@@ -127,7 +133,19 @@ namespace demo {
     return result;
   }
 
-  // This class
+  // This is the fold operator that will accumulate a SummedClampedWaveforms object.
+  inline void accumulateSCW(SummedClampedWaveforms& scw, Waveforms const& wf)
+  {
+    log_record("start_accSCW", wf.spill_id, wf.apa_id, &scw, wf.size(), &wf);
+    scw.size += wf.size();
+    for (auto const& w : wf.waveforms) {
+      for (double x : w.samples) {
+        scw.sum += x;
+      }
+    }
+    log_record("end_accSCW", wf.spill_id, wf.apa_id, &scw, wf.size(), &wf);
+  }
+
 } // namespace demo
 
 #endif
