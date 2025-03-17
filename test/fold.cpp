@@ -70,12 +70,10 @@ TEST_CASE("Different levels of fold", "[graph]")
     return store;
   }};
 
-  g.with("run_add", add, concurrency::unlimited).reduce("number").for_each("run").to("run_sum");
-  g.with("job_add", add, concurrency::unlimited).reduce("number").to("job_sum");
+  g.with("run_add", add, concurrency::unlimited).fold("number").for_each("run").to("run_sum");
+  g.with("job_add", add, concurrency::unlimited).fold("number").to("job_sum");
 
-  g.with("two_layer_job_add", add, concurrency::unlimited)
-    .reduce("run_sum")
-    .to("two_layer_job_sum");
+  g.with("two_layer_job_add", add, concurrency::unlimited).fold("run_sum").to("two_layer_job_sum");
 
   g.with(
      "verify_run_sum", [](unsigned int actual) { CHECK(actual == 10u); }, concurrency::unlimited)
