@@ -89,8 +89,9 @@ namespace demo {
     // we continue unfolding?"
     bool predicate(std::size_t made_so_far) const
     {
+      log_record("start_pred", 0, 0, this, made_so_far, nullptr);
       bool const result = made_so_far < maxsize_;
-      log_record("pred", 0, 0, this, made_so_far, nullptr);
+      log_record("end_pred", 0, 0, this, made_so_far, nullptr);
       return result;
     }
 
@@ -99,10 +100,11 @@ namespace demo {
     auto op(std::size_t made_so_far, std::size_t chunksize) const
     {
       // How many waveforms should go into this chunk?
+      log_record("start_op", 0, 0, this, chunksize, nullptr);
       std::size_t const newsize = std::min(chunksize, maxsize_ - made_so_far);
       auto result =
         std::make_pair(made_so_far + newsize, Waveforms{newsize, 1.0 * made_so_far, 0, 0});
-      log_record("op", 0, 0, this, newsize, nullptr);
+      log_record("end_op", 0, 0, this, newsize, nullptr);
       return result;
     }
 
@@ -121,9 +123,11 @@ namespace demo {
         x = std::clamp(x, -10.0, 10.0);
       }
     }
-    log_record("end_clamp", input.spill_id, input.apa_id, &input, input.size(), nullptr);
+    log_record("end_clamp", input.spill_id, input.apa_id, &input, input.size(), &result);
     return result;
   }
+
+  // This class
 } // namespace demo
 
 #endif

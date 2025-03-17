@@ -99,7 +99,8 @@ int main()
   demo::log_record("add_transform", 0, 0, nullptr, 0, nullptr);
   g.with(demo::clampWaveforms, concurrency::unlimited)
     .transform("waves_in_apa") // the type of node to create, and the label of the input
-    .to("clamped_waves");      // label the chunks we create as "clamped_waves"
+    .for_each("APA")
+    .to("clamped_waves"); // label the chunks we create as "clamped_waves"
 
   demo::log_record("add_output", 0, 0, nullptr, 0, nullptr);
   g.make<test::products_for_output>().output_with(&test::products_for_output::save,
