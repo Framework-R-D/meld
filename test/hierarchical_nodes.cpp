@@ -114,7 +114,7 @@ TEST_CASE("Hierarchical nodes", "[graph]")
   g.with(square, concurrency::unlimited).transform("number").to("squared_number");
   g.with(add, concurrency::unlimited)
     .when()
-    .reduce("squared_number")
+    .fold("squared_number")
     .for_each("run")
     .to("added_data")
     .initialized_with(15u);

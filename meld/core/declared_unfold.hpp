@@ -257,7 +257,7 @@ namespace meld {
         auto [next_value, prods] = std::invoke(unfold, obj, running_value);
         ++product_count_;
         products new_products;
-        new_products.add_all(output_, prods);
+        new_products.add_all(output_, std::move(prods));
         auto child = g.make_child_for(counter++, std::move(new_products));
         to_output_.try_put({child, eom->make_child(child->id()), ++msg_counter_});
         running_value = next_value;

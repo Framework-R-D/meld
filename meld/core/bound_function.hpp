@@ -89,7 +89,7 @@ namespace meld {
                            std::move(inputs)};
     }
 
-    auto reduce(std::array<specified_label, N - 1> input_args)
+    auto fold(std::array<specified_label, N - 1> input_args)
       requires is_fold_like<FT>
     {
       using all_but_first = skip_first_type<input_parameter_types>;
@@ -122,9 +122,9 @@ namespace meld {
     }
 
     template <label_compatible L>
-    auto reduce(std::array<L, N> input_args)
+    auto fold(std::array<L, N> input_args)
     {
-      return reduce(to_labels(input_args));
+      return fold(to_labels(input_args));
     }
 
     auto evaluate(label_compatible auto... input_args)
@@ -152,12 +152,12 @@ namespace meld {
         {specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
-    auto reduce(label_compatible auto... input_args)
+    auto fold(label_compatible auto... input_args)
     {
       static_assert(N - 1 == sizeof...(input_args),
                     "The number of function parameters is not the same as the number of specified "
                     "input arguments.");
-      return reduce({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
+      return fold({specified_label::create(std::forward<decltype(input_args)>(input_args))...});
     }
 
   private:
