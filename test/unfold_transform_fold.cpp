@@ -126,6 +126,20 @@ namespace {
   private:
     std::size_t const maxsize_; // total number of waveforms to make for the unfold
   }; // class WaveformGenerator
+
+  // This function is used to transform an input Waveforms object into an
+  // output Waveforms object. The output is a clamped version of the input.
+  Waveforms clampWaveforms(Waveforms const& input)
+  {
+    Waveforms result(input);
+    for (Waveform& wf : result.waveforms) {
+      for (double& x : wf.samples) {
+        x = std::clamp(x, -10.0, 10.0);
+      }
+    }
+    return result;
+  }
+
 } // namespace
 
 int main()
@@ -206,6 +220,12 @@ int main()
     .unfold("wgen")        // the type of node to create
     .into("waves_in_apa")  // label the chunks we create as "waves_in_apa"
     .within_family("APA"); // put the chunks into a data set category called "APA"
+
+  // Add the transform node to the graph.
+  log_record("add_transform", 0, 0, nullptr, 0, nullptr);
+  g.with(clampWaveforms, concurrency::unlimited)
+    .transform("waves_in_apa") // the type of node to create, and the label of the input
+    .to("clamped_waves");      // label the chunks we create as "clamped_waves"
 
   log_record("add_output", 0, 0, nullptr, 0, nullptr);
   g.make<test::products_for_output>().output_with(&test::products_for_output::save,
