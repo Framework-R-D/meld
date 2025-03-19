@@ -81,7 +81,7 @@ int main()
   // Add the unfold node to the graph. We do not yet know how to provide the chunksize
   // to the constructor of the WaveformGenerator, so we will use the default value.
   demo::log_record("add_unfold", 0, 0, nullptr, 0, nullptr);
-  auto const chunksize = 10 * 1000ULL; // this could be read from a configuration file
+  auto const chunksize = 256LL; // this could be read from a configuration file
   // auto unfold_op = [](WaveformGenerator& wg, std::size_t running_value) {
   //   return wg.op(running_value, chunksize);
   // };
@@ -105,7 +105,7 @@ int main()
   // Add the fold node to the graph.
   demo::log_record("add_fold", 0, 0, nullptr, 0, nullptr);
   g.with("accum_for_spill", demo::accumulateSCW, concurrency::unlimited)
-    .reduce("clamped_waves"_in("APA"))
+    .fold("clamped_waves"_in("APA"))
     .to("summed_waveforms")
     .for_each("spill");
 
