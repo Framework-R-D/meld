@@ -16,19 +16,30 @@
 
 using namespace meld;
 
-int main()
+// Call the program as follows:
+// ./unfold_transform_fold [number of spills [APAs per spill]]
+int main(int argc, char* argv[])
 {
-  // Setup logging.
-  auto tsvlog = spdlog::basic_logger_mt("tsvlog", "unfold_transform_fold.tsv");
-  spdlog::set_default_logger(tsvlog);
-  spdlog::set_pattern("%v"); // output only the message, no metadata.
-  spdlog::info("time\tthread\tevent\tspill\tapa\tactive\tdata\tother");
-  spdlog::set_pattern("%H:%M:%S.%f\t%t\t%v");
+  std::vector<std::string> const args(argv, argv + argc);
+
+  //spdlog::set_pattern("%H:%M:%S.%f\t%t\t%v");
 
   // Constants that configure the work load.
-  //constexpr auto wires_per_spill = 150 * 10 * 1000ul;
-  constexpr auto wires_per_spill = 1000ul; // 350 * 1000ul;
-  constexpr auto number_of_spills = 2ul;
+
+  std::size_t const number_of_spills = [&args]() {
+    if (args.size() > 1) {
+      return std::stoull(args[1]);
+    }
+    return 1ull;
+  }();
+  int const apas_per_spill = [&args]() {
+    if (args.size() > 2) {
+      return std::stoi(args[2]);
+    }
+    return 150;
+  }();
+
+  std::size_t const wires_per_spill = apas_per_spill * 256ull;
 
   // Create some levels of the data set categories hierarchy.
   // We may or may not want to create pre-generated data set categories like this.
@@ -50,8 +61,8 @@ int main()
   auto const e = cend(levels);
   std::size_t counter = 1;
 
-  auto source =
-    [it, e, counter](cached_product_stores& cached_stores) mutable -> product_store_ptr {
+  auto source = [it, e, counter, wires_per_spill](
+                  cached_product_stores& cached_stores) mutable -> product_store_ptr {
     // If the range is empty, return nullptr. This tells the framework_graph there is nothing
     // to process.
     if (it == e) {
@@ -117,4 +128,5 @@ int main()
   demo::log_record("execute_graph", 0, 0, nullptr, 0, nullptr);
   g.execute("unfold_transform_fold");
   demo::log_record("done", 0, 0, nullptr, 0, nullptr);
+  demo::write_log("unfold_transform_fold.tsv");
 }
