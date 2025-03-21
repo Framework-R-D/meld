@@ -25,6 +25,12 @@ namespace meld {
   template <typename T>
   struct product : product_base {
     explicit product(T const& prod) : obj{prod} {}
+
+    // The following constructor does NOT use a forwarding/universal reference!
+    // It is not a template itself, but it uses the template parameter T from the
+    // class template.
+    explicit product(T&& prod) : obj{std::move(prod)} {}
+
     void const* address() const final { return &obj; }
     virtual std::type_index type() const { return std::type_index{typeid(T)}; }
     std::remove_cvref_t<T> obj;
