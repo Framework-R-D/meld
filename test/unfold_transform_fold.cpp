@@ -21,16 +21,11 @@ using namespace meld;
 int main(int argc, char* argv[])
 {
   std::vector<std::string> const args(argv, argv + argc);
-
-  //spdlog::set_pattern("%H:%M:%S.%f\t%t\t%v");
-
-  // Constants that configure the work load.
-
   std::size_t const number_of_spills = [&args]() {
     if (args.size() > 1) {
       return std::stoull(args[1]);
     }
-    return 1ull;
+    return 10ull;
   }();
   int const apas_per_spill = [&args]() {
     if (args.size() > 2) {

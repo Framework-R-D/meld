@@ -2,24 +2,44 @@
 #define DEMO_LOG_RECORD_H
 
 #include "oneapi/tbb/concurrent_queue.h"
+#include <chrono>
 #include <fstream>
+#include <iomanip>
 
 namespace demo {
 
   std::size_t const EVENT_NAME_SIZE = 16;
   struct record {
+    record(std::size_t spill_id,
+           std::size_t apa_id,
+           void const* active,
+           std::size_t data,
+           void const* orig) :
+      spill_id(spill_id),
+      apa_id(apa_id),
+      active(active),
+      data(data),
+      orig(orig),
+      thread_index(tbb::this_task_arena::current_thread_index())
+    {
+      timestamp =
+        std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
+    }
     std::size_t spill_id;
     std::size_t apa_id;
     void const* active;
     std::size_t data;
     void const* orig;
+    double timestamp;
     char event[EVENT_NAME_SIZE];
+    int thread_index;
   };
 
   std::ostream& operator<<(std::ostream& os, record const& r)
   {
-    os << r.event << '\t' << r.spill_id << '\t' << r.apa_id << '\t' << r.active << '\t' << r.data
-       << '\t' << r.orig;
+    os << std::scientific << std::setprecision(std::numeric_limits<double>::max_digits10)
+       << r.timestamp << '\t' << r.thread_index << '\t' << r.event << '\t' << r.spill_id << '\t'
+       << r.apa_id << '\t' << r.active << '\t' << r.data << '\t' << r.orig;
     return os;
   }
 
@@ -32,15 +52,16 @@ namespace demo {
                          std::size_t data,
                          void const* orig)
   {
-    record r{spill_id, apa_id, active, data, orig, ""};
+    record r(spill_id, apa_id, active, data, orig);
     memcpy(r.event, event, EVENT_NAME_SIZE);
+
     global_queue.push(r);
   }
 
   inline void write_log(std::string const& filename)
   {
     std::ofstream log_file(filename, std::ios_base::out | std::ios_base::trunc);
-    log_file << "event\tspill_id\tapa_id\tactive\tdata\torig\n";
+    log_file << "time\tthread\tevent\tspill\tapa\tactive\tdata\torig\n";
     for (auto it = global_queue.unsafe_cbegin(), e = global_queue.unsafe_cend(); it != e; ++it) {
       log_file << *it << '\n';
     }
