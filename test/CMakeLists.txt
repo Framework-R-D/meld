@@ -39,7 +39,7 @@ function(add_catch_test BASENAME)
   endif()
 endfunction()
 
-add_executable(unfold_transform_fold unfold_transform_fold.cpp)
+add_executable(unfold_transform_fold unfold_transform_fold.cpp waveforms.cpp waveform_generator_input.cpp)
 target_link_libraries(unfold_transform_fold PRIVATE meld::core)
 
 add_unit_test(concepts LIBRARIES meld::core)

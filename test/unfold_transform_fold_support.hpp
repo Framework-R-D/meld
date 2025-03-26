@@ -6,72 +6,16 @@
 #include <vector>
 
 #include "test/log_record.hpp"
+#include "test/waveform_generator_input.hpp"
+#include "test/waveforms.hpp"
 
 namespace demo {
-
-  struct Waveform {
-    // We should be set to the number of samples on a wire.
-    std::array<double, 3 * 1024> samples;
-  };
-
-  struct Waveforms {
-    std::vector<Waveform> waveforms;
-    int spill_id;
-    int apa_id;
-
-    std::size_t size() const { return waveforms.size(); }
-    Waveforms(std::size_t n, double val, int spill_id, int apa_id) :
-      waveforms(n, {val}), spill_id(spill_id), apa_id(apa_id)
-    {
-      log_record("wsctor", spill_id, apa_id, this, n, nullptr);
-    }
-
-    Waveforms(Waveforms const& other) :
-      waveforms(other.waveforms), spill_id(other.spill_id), apa_id(other.apa_id)
-    {
-      log_record("wscopy", spill_id, apa_id, this, waveforms.size(), &other);
-    }
-
-    Waveforms(Waveforms&& other) :
-      waveforms(std::move(other.waveforms)), spill_id(other.spill_id), apa_id(other.apa_id)
-    {
-      log_record("wsmove", spill_id, apa_id, this, waveforms.size(), &other);
-    }
-
-    // instrument copy assignment and move assignment
-    Waveforms& operator=(Waveforms const& other)
-    {
-      waveforms = other.waveforms;
-      spill_id = other.spill_id;
-      apa_id = other.apa_id;
-      log_record("wscopy=", spill_id, apa_id, this, waveforms.size(), &other);
-      return *this;
-    }
-
-    Waveforms& operator=(Waveforms&& other)
-    {
-      waveforms = std::move(other.waveforms);
-      spill_id = other.spill_id;
-      apa_id = other.apa_id;
-      log_record("wsmove=", spill_id, apa_id, this, waveforms.size(), &other);
-      return *this;
-    }
-
-    ~Waveforms() { log_record("wsdtor", spill_id, apa_id, this, waveforms.size(), nullptr); };
-  };
-
-  // This is the data product that our unfold node will receive from each spill.
-  struct WaveformGeneratorInput {
-    std::size_t size;
-  };
 
   // This is the data product created by our fold node.
   struct SummedClampedWaveforms {
     std::size_t size = 0;
     double sum = 0.0;
   };
-
-  using WGI = WaveformGeneratorInput;
 
   // This is a class that provides unfold operation and a predicate to control
   // when the unfold is stopped.
@@ -84,7 +28,7 @@ namespace demo {
     //  chunksize.
     explicit WaveformGenerator(WGI const& maxsize) : maxsize_{maxsize.size}
     {
-      log_record("wgc_ctor", 0, 0, this, 0, nullptr);
+      log_record("wgc_ctor", maxsize.spill_id, 0, this, 0, nullptr);
     }
 
     // The initial value of the count of how many waveforms we have made so far.

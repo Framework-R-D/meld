@@ -2,6 +2,7 @@
 #define DEMO_LOG_RECORD_H
 
 #include "oneapi/tbb/concurrent_queue.h"
+#include "oneapi/tbb/task_arena.h"
 #include <chrono>
 #include <fstream>
 #include <iomanip>
@@ -22,9 +23,11 @@ namespace demo {
       orig(orig),
       thread_index(tbb::this_task_arena::current_thread_index())
     {
-      timestamp =
-        std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
+      auto const t = std::chrono::system_clock::now().time_since_epoch();
+      double const ts = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t).count());
+      timestamp = ts*1.0e-6;
     }
+
     std::size_t spill_id;
     std::size_t apa_id;
     void const* active;
@@ -35,7 +38,7 @@ namespace demo {
     int thread_index;
   };
 
-  std::ostream& operator<<(std::ostream& os, record const& r)
+  inline std::ostream& operator<<(std::ostream& os, record const& r)
   {
     os << std::scientific << std::setprecision(std::numeric_limits<double>::max_digits10)
        << r.timestamp << '\t' << r.thread_index << '\t' << r.event << '\t' << r.spill_id << '\t'
@@ -43,7 +46,7 @@ namespace demo {
     return os;
   }
 
-  static oneapi::tbb::concurrent_queue<record> global_queue;
+  extern oneapi::tbb::concurrent_queue<record> global_queue;
 
   inline void log_record(char const* event,
                          std::size_t spill_id,
