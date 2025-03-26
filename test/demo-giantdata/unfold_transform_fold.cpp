@@ -2,11 +2,11 @@
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
-#include "test/log_record.hpp"
+#include "test/demo-giantdata/log_record.hpp"
+#include "test/demo-giantdata/unfold_transform_fold_support.hpp"
 #include "test/products_for_output.hpp"
-#include "test/unfold_transform_fold_support.hpp"
 
-#include "test/waveform_generator_input.hpp"
+#include "test/demo-giantdata/waveform_generator_input.hpp"
 
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
@@ -15,10 +15,6 @@
 #include <array>
 #include <string>
 #include <vector>
-
-namespace demo {
-  oneapi::tbb::concurrent_queue<demo::record> global_queue;
-} // namespace demo
 
 using namespace meld;
 

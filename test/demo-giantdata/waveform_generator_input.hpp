@@ -7,7 +7,7 @@ namespace demo {
   // This is the data product that our unfold node will receive from each spill.
   struct WaveformGeneratorInput {
 
-    explicit WaveformGeneratorInput(std::size_t size = 0, int spill_id = 0);
+    explicit WaveformGeneratorInput(std::size_t size = -1, int spill_id = -1);
     WaveformGeneratorInput(WaveformGeneratorInput const& other);
     WaveformGeneratorInput(WaveformGeneratorInput&& other);
 
@@ -20,7 +20,7 @@ namespace demo {
   };
 
   using WGI = WaveformGeneratorInput;
-  inline std::size_t constexpr mysize(WaveformGeneratorInput const&) { return sizeof(WGI); };
+  inline std::size_t mysize(WaveformGeneratorInput const& w) { return sizeof(w); }
 } // namespace demo
 
 #endif

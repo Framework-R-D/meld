@@ -8,21 +8,22 @@ demo::WaveformGeneratorInput::WaveformGeneratorInput(std::size_t size, int spill
 }
 
 demo::WaveformGeneratorInput::WaveformGeneratorInput(WaveformGeneratorInput const& other) :
-  spill_id(other.spill_id)
+  size(other.size), spill_id(other.spill_id)
 {
-  log_record("wgictor_copy", spill_id, 0, this, mysize(*this), nullptr);
+  log_record("wgicopy", spill_id, 0, this, mysize(*this), &other);
 }
 
 demo::WaveformGeneratorInput::WaveformGeneratorInput(WaveformGeneratorInput&& other) :
-  spill_id(other.spill_id)
+  size(other.size), spill_id(other.spill_id)
 {
-  log_record("wgictor_move", spill_id, 0, this, mysize(*this), nullptr);
+  log_record("wgimove", spill_id, 0, this, mysize(*this), &other);
 }
 
 demo::WaveformGeneratorInput& demo::WaveformGeneratorInput::operator=(
   WaveformGeneratorInput const& other)
 {
-  log_record("wgictor_copy_assign", spill_id, 0, this, 0, nullptr);
+  log_record("wgicopy=", spill_id, 0, this, 0, &other);
+  size = other.size;
   spill_id = other.spill_id;
   return *this;
 }
@@ -30,7 +31,8 @@ demo::WaveformGeneratorInput& demo::WaveformGeneratorInput::operator=(
 demo::WaveformGeneratorInput& demo::WaveformGeneratorInput::operator=(
   WaveformGeneratorInput&& other)
 {
-  log_record("wgictor_move_assign", spill_id, 0, this, 0, nullptr);
+  log_record("wgimove=", spill_id, 0, this, 0, &other);
+  size = other.size;
   spill_id = other.spill_id;
   return *this;
 }

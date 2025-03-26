@@ -5,9 +5,9 @@
 #include <utility>
 #include <vector>
 
-#include "test/log_record.hpp"
-#include "test/waveform_generator_input.hpp"
-#include "test/waveforms.hpp"
+#include "test/demo-giantdata/log_record.hpp"
+#include "test/demo-giantdata/waveform_generator_input.hpp"
+#include "test/demo-giantdata/waveforms.hpp"
 
 namespace demo {
 
@@ -26,10 +26,17 @@ namespace demo {
     // Create a WaveformGenerator that will generate waveforms exactly maxsize
     // waveforms. They will be spread across vectors each of size no more than
     //  chunksize.
-    explicit WaveformGenerator(WGI const& maxsize) : maxsize_{maxsize.size}
+    explicit WaveformGenerator(WGI const& wgi) : maxsize_{wgi.size}
     {
-      log_record("wgc_ctor", maxsize.spill_id, 0, this, 0, nullptr);
+      log_record("wgctor", wgi.spill_id, 0, this, sizeof(*this), nullptr);
     }
+
+    WaveformGenerator(WaveformGenerator const&) = delete;
+    WaveformGenerator(WaveformGenerator&&) = delete;
+    WaveformGenerator& operator=(WaveformGenerator const&) = delete;
+    WaveformGenerator& operator=(WaveformGenerator&&) = delete;
+
+    ~WaveformGenerator() { log_record("wgdtor", 0, 0, this, sizeof(*this), nullptr); }
 
     // The initial value of the count of how many waveforms we have made so far.
     std::size_t initial_value() const { return 0; }
@@ -59,7 +66,7 @@ namespace demo {
     }
 
   private:
-    std::size_t const maxsize_; // total number of waveforms to make for the unfold
+    std::size_t maxsize_; // total number of waveforms to make for the unfold
   }; // class WaveformGenerator
 
   // This function is used to transform an input Waveforms object into an

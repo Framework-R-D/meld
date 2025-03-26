@@ -24,8 +24,9 @@ namespace demo {
       thread_index(tbb::this_task_arena::current_thread_index())
     {
       auto const t = std::chrono::system_clock::now().time_since_epoch();
-      double const ts = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t).count());
-      timestamp = ts*1.0e-6;
+      double const ts =
+        static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t).count());
+      timestamp = ts * 1.0e-6;
     }
 
     std::size_t spill_id;
@@ -46,7 +47,8 @@ namespace demo {
     return os;
   }
 
-  extern oneapi::tbb::concurrent_queue<record> global_queue;
+  // Define a global queue for logging records
+  inline oneapi::tbb::concurrent_queue<record> global_queue;
 
   inline void log_record(char const* event,
                          std::size_t spill_id,
