@@ -2,15 +2,12 @@
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
-#include "test/demo-giantdata/log_record.hpp"
-#include "test/demo-giantdata/user_algorithms.hpp"
 #include "test/products_for_output.hpp"
 
+#include "test/demo-giantdata/log_record.hpp"
+#include "test/demo-giantdata/user_algorithms.hpp"
 #include "test/demo-giantdata/waveform_generator.hpp"
 #include "test/demo-giantdata/waveform_generator_input.hpp"
-
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/spdlog.h"
 
 #include <algorithm>
 #include <array>
