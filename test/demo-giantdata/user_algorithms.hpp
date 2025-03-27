@@ -1,9 +1,5 @@
-#ifndef MELD_TEST_UNFOLD_TRANSFORM_FOLD_SUPPORT_HPP
-#define MELD_TEST_UNFOLD_TRANSFORM_FOLD_SUPPORT_HPP
-
-#include <array>
-#include <utility>
-#include <vector>
+#ifndef MELD_TEST_USER_ALGORITHMS_HPP
+#define MELD_TEST_USER_ALGORITHMS_HPP
 
 #include "summed_clamped_waveforms.hpp"
 #include "waveforms.hpp"
