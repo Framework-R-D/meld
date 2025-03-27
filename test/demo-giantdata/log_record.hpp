@@ -4,6 +4,7 @@
 #include "oneapi/tbb/concurrent_queue.h"
 #include "oneapi/tbb/task_arena.h"
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 
