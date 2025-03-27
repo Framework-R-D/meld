@@ -1,9 +1,9 @@
 #ifndef MELD_TEST_DEMO_GIANTDATA_WAVEFORM_GENERATOR_HPP
 #define MELD_TEST_DEMO_GIANTDATA_WAVEFORM_GENERATOR_HPP
 
-#include "test/demo-giantdata/log_record.hpp"
-#include "test/demo-giantdata/waveform_generator_input.hpp"
-#include "test/demo-giantdata/waveforms.hpp"
+#include "log_record.hpp"
+#include "waveform_generator_input.hpp"
+#include "waveforms.hpp"
 
 #include <cstddef>
 

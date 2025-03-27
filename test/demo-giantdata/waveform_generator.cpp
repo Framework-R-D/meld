@@ -1,8 +1,8 @@
-#include "test/demo-giantdata/waveforms.hpp"
+#include "waveforms.hpp"
 
-#include "test/demo-giantdata/log_record.hpp"
-#include "test/demo-giantdata/waveform_generator.hpp"
-#include "test/demo-giantdata/waveform_generator_input.hpp"
+#include "log_record.hpp"
+#include "waveform_generator.hpp"
+#include "waveform_generator_input.hpp"
 
 #include <cstddef>
 
