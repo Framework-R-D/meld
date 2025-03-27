@@ -6,6 +6,7 @@
 #include "test/demo-giantdata/unfold_transform_fold_support.hpp"
 #include "test/products_for_output.hpp"
 
+#include "test/demo-giantdata/waveform_generator.hpp"
 #include "test/demo-giantdata/waveform_generator_input.hpp"
 
 #include "spdlog/sinks/basic_file_sink.h"
