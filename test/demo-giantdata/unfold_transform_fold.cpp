@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
   levels.push_back(level_id::base_ptr());
   // TODO: Put runs and subruns into the hierarchy.
   std::generate_n(std::back_inserter(levels), number_of_spills, [i = 0u]() mutable {
-    return level_id::base().make_child(i++, "spill");
+    return level_id::base().make_child(++i, "spill");
   });
 
   // Create the lambda that will be used to intialize the inputs to the graph.
@@ -71,8 +71,19 @@ int main(int argc, char* argv[])
       // Put the WGI product into the spill, so that our CHOF can find it.
       auto next_size = wires_per_spill;
       demo::log_record("add_wgi", store->id()->number(), 0, &store, next_size, nullptr);
+      // NOTE: the only reason that we are able to put the spill id into the WGI object 
+      // is because we have access to the store 
       store->add_product<demo::WGI>("wgen",
                                     demo::WGI(next_size, static_cast<int>(store->id()->number())));
+    } 
+    else if (store->id()->level_name() == "job") {
+        // Put the WGI product into the job, so that our CHOF can find it.
+        auto next_size = wires_per_spill;
+        demo::log_record("add_job_wgi", store->id()->number(), 0, &store, next_size, nullptr);
+        // NOTE: the only reason that we are able to put the spill id into the WGI object 
+        // is because we have access to the store 
+        store->add_product<demo::WGI>("wgen",
+                                      demo::WGI(next_size, static_cast<int>(store->id()->number())));
     }
     return store;
   };
@@ -91,16 +102,14 @@ int main(int argc, char* argv[])
     // to the constructor of the WaveformGenerator, so we will use the default value.
     demo::log_record("add_unfold", 0, 0, nullptr, 0, nullptr);
     auto const chunksize = 256LL; // this could be read from a configuration file
-    // auto unfold_op = [](WaveformGenerator& wg, std::size_t running_value) {
-    //   return wg.op(running_value, chunksize);
-    // };
+   
     g.with<demo::WaveformGenerator>(
        &demo::WaveformGenerator::predicate,
        [](demo::WaveformGenerator const& wg, std::size_t running_value) {
          return wg.op(running_value, chunksize);
        },
        concurrency::unlimited)
-      .unfold("wgen")        // the type of node to create
+      .unfold("wgen"_in("spill"))        // the type of node to create
       .into("waves_in_apa")  // label the chunks we create as "waves_in_apa"
       .within_family("APA"); // put the chunks into a data set category called "APA"
 
