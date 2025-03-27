@@ -58,9 +58,8 @@ int main(int argc, char* argv[])
   // The range [it, e) will be used to iterate over the "levels".
   auto it = cbegin(levels);
   auto const e = cend(levels);
-  std::size_t counter = 1;
 
-  auto source = [it, e, counter, wires_per_spill](
+  auto source = [it, e, wires_per_spill](
                   cached_product_stores& cached_stores) mutable -> product_store_ptr {
     // If the range is empty, return nullptr. This tells the framework_graph there is nothing
     // to process.
@@ -77,7 +76,6 @@ int main(int argc, char* argv[])
       demo::log_record("add_wgi", store->id()->number(), 0, &store, next_size, nullptr);
       store->add_product<demo::WGI>("wgen",
                                     demo::WGI(next_size, static_cast<int>(store->id()->number())));
-      ++counter;
     }
     return store;
   };
