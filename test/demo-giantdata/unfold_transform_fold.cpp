@@ -3,7 +3,7 @@
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
 #include "test/demo-giantdata/log_record.hpp"
-#include "test/demo-giantdata/unfold_transform_fold_support.hpp"
+#include "test/demo-giantdata/user_algorithms.hpp"
 #include "test/products_for_output.hpp"
 
 #include "test/demo-giantdata/waveform_generator.hpp"
@@ -59,8 +59,8 @@ int main(int argc, char* argv[])
   auto it = cbegin(levels);
   auto const e = cend(levels);
 
-  auto source = [it, e, wires_per_spill](
-                  cached_product_stores& cached_stores) mutable -> product_store_ptr {
+  auto source =
+    [it, e, wires_per_spill](cached_product_stores& cached_stores) mutable -> product_store_ptr {
     // If the range is empty, return nullptr. This tells the framework_graph there is nothing
     // to process.
     if (it == e) {
