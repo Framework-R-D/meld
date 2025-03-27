@@ -26,9 +26,9 @@ namespace demo {
     // Create a WaveformGenerator that will generate waveforms exactly maxsize
     // waveforms. They will be spread across vectors each of size no more than
     //  chunksize.
-    explicit WaveformGenerator(WGI const& wgi) : maxsize_{wgi.size}
+    explicit WaveformGenerator(WGI const& wgi) : maxsize_{wgi.size}, spill_id_(wgi.spill_id)
     {
-      log_record("wgctor", wgi.spill_id, 0, this, sizeof(*this), nullptr);
+      log_record("wgctor", spill_id_, 0, this, sizeof(*this), nullptr);
     }
 
     WaveformGenerator(WaveformGenerator const&) = delete;
@@ -36,7 +36,7 @@ namespace demo {
     WaveformGenerator& operator=(WaveformGenerator const&) = delete;
     WaveformGenerator& operator=(WaveformGenerator&&) = delete;
 
-    ~WaveformGenerator() { log_record("wgdtor", 0, 0, this, sizeof(*this), nullptr); }
+    ~WaveformGenerator() { log_record("wgdtor", spill_id_, 0, this, sizeof(*this), nullptr); }
 
     // The initial value of the count of how many waveforms we have made so far.
     std::size_t initial_value() const { return 0; }
@@ -46,9 +46,9 @@ namespace demo {
     // we continue unfolding?"
     bool predicate(std::size_t made_so_far) const
     {
-      log_record("start_pred", 0, 0, this, made_so_far, nullptr);
+      log_record("start_pred", spill_id_, 0, this, made_so_far, nullptr);
       bool const result = made_so_far < maxsize_;
-      log_record("end_pred", 0, 0, this, made_so_far, nullptr);
+      log_record("end_pred", spill_id_, 0, this, made_so_far, nullptr);
       return result;
     }
 
@@ -57,16 +57,17 @@ namespace demo {
     auto op(std::size_t made_so_far, std::size_t chunksize) const
     {
       // How many waveforms should go into this chunk?
-      log_record("start_op", 0, 0, this, chunksize, nullptr);
+      log_record("start_op", spill_id_, 0, this, chunksize, nullptr);
       std::size_t const newsize = std::min(chunksize, maxsize_ - made_so_far);
       auto result =
         std::make_pair(made_so_far + newsize, Waveforms{newsize, 1.0 * made_so_far, 0, 0});
-      log_record("end_op", 0, 0, this, newsize, nullptr);
+      log_record("end_op", spill_id_, 0, this, newsize, nullptr);
       return result;
     }
 
   private:
     std::size_t maxsize_; // total number of waveforms to make for the unfold
+    int spill_id_;        // the id of the spill this object will process
   }; // class WaveformGenerator
 
   // This function is used to transform an input Waveforms object into an
