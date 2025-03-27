@@ -6,16 +6,11 @@
 #include <vector>
 
 #include "test/demo-giantdata/log_record.hpp"
+#include "test/demo-giantdata/summed_clamped_waveforms.hpp"
 #include "test/demo-giantdata/waveform_generator_input.hpp"
 #include "test/demo-giantdata/waveforms.hpp"
 
 namespace demo {
-
-  // This is the data product created by our fold node.
-  struct SummedClampedWaveforms {
-    std::size_t size = 0;
-    double sum = 0.0;
-  };
 
   // This is a class that provides unfold operation and a predicate to control
   // when the unfold is stopped.
