@@ -104,7 +104,7 @@ namespace meld {
       return to(std::array<std::string, M>{std::forward<decltype(ts)>(ts)...});
     }
 
-    auto& for_each(std::string const& level_name)
+    auto& partitioned_by(std::string const& level_name)
     {
       fold_interval_ = level_name;
       return *this;

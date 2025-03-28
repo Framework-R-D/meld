@@ -82,7 +82,7 @@ TEST_CASE("Different hierarchies used with fold", "[graph]")
 
   g.with("run_add", add, concurrency::unlimited)
     .fold("number")
-    .for_each("run")
+    .partitioned_by("run")
     .to("run_sum")
     .initialized_with(0u);
   g.with("job_add", add, concurrency::unlimited).fold("number").to("job_sum");

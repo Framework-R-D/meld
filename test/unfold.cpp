@@ -111,7 +111,7 @@ TEST_CASE("Splitting the processing", "[graph]")
     .unfold("max_number")
     .into("new_number")
     .within_family("lower1");
-  g.with(add, concurrency::unlimited).fold("new_number").for_each("event").to("sum1");
+  g.with(add, concurrency::unlimited).fold("new_number").partitioned_by("event").to("sum1");
   g.with(check_sum, concurrency::unlimited).observe("sum1");
 
   g.with<iterate_through>(
@@ -119,7 +119,10 @@ TEST_CASE("Splitting the processing", "[graph]")
     .unfold("ten_numbers")
     .into("each_number")
     .within_family("lower2");
-  g.with(add_numbers, concurrency::unlimited).fold("each_number").for_each("event").to("sum2");
+  g.with(add_numbers, concurrency::unlimited)
+    .fold("each_number")
+    .partitioned_by("event")
+    .to("sum2");
   g.with(check_sum_same, concurrency::unlimited).observe("sum2");
 
   g.make<test::products_for_output>().output_with(&test::products_for_output::save,
