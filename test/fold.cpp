@@ -24,6 +24,7 @@
 // =======================================================================================
 
 #include "meld/core/cached_product_stores.hpp"
+#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -45,23 +46,26 @@ TEST_CASE("Different levels of fold", "[graph]")
 {
   constexpr auto index_limit = 2u;
   constexpr auto number_limit = 5u;
-  std::vector<level_id_ptr> levels;
-  levels.reserve(1 + index_limit * (number_limit + 1u));
-  auto job_id = levels.emplace_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    auto run_id = levels.emplace_back(job_id->make_child(i, "run"));
-    for (unsigned j = 0u; j != number_limit; ++j) {
-      levels.push_back(run_id->make_child(j, "event"));
-    }
-  }
 
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
+  auto levels_to_process = [](framework_driver<level_id_ptr>& driver) {
+    auto job_id = level_id::base_ptr();
+    driver.yield(job_id);
+    for (unsigned i = 0u; i != index_limit; ++i) {
+      auto run_id = job_id->make_child(i, "run");
+      driver.yield(run_id);
+      for (unsigned j = 0u; j != number_limit; ++j) {
+        driver.yield(run_id->make_child(j, "event"));
+      }
+    }
+  };
+
+  framework_driver<level_id_ptr> drive{levels_to_process};
+  framework_graph g{[&drive](cached_product_stores& cached_stores) mutable -> product_store_ptr {
+    auto next = drive();
+    if (not next) {
       return nullptr;
     }
-    auto const& id = *it++;
+    auto const& id = *next;
 
     auto store = cached_stores.get_store(id);
     if (id->level_name() == "event") {

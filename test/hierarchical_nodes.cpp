@@ -17,6 +17,7 @@
 // =======================================================================================
 
 #include "meld/core/cached_product_stores.hpp"
+#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -34,6 +35,21 @@
 using namespace meld;
 
 namespace {
+  constexpr auto index_limit = 2u;
+  constexpr auto number_limit = 5u;
+
+  void levels_to_process(framework_driver<level_id_ptr>& driver)
+  {
+    driver.yield(level_id::base_ptr());
+    for (unsigned i = 0u; i != index_limit; ++i) {
+      auto id = level_id::base().make_child(i, "run");
+      driver.yield(id);
+      for (unsigned j = 0u; j != number_limit; ++j) {
+        driver.yield(id->make_child(j, "event"));
+      }
+    }
+  }
+
   auto square(unsigned int const num) { return num * num; }
 
   struct data_for_rms {
@@ -80,25 +96,13 @@ namespace {
 
 TEST_CASE("Hierarchical nodes", "[graph]")
 {
-  constexpr auto index_limit = 2u;
-  constexpr auto number_limit = 5u;
-  std::vector<level_id_ptr> levels;
-  levels.reserve(1 + index_limit * (number_limit + 1u));
-  levels.push_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    auto id = level_id::base().make_child(i, "run");
-    levels.push_back(id);
-    for (unsigned j = 0u; j != number_limit; ++j) {
-      levels.push_back(id->make_child(j, "event"));
-    }
-  }
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
+  framework_driver drive{levels_to_process};
+  framework_graph g{[&drive](cached_product_stores& cached_stores) mutable -> product_store_ptr {
+    auto next_id = drive();
+    if (not next_id) {
       return nullptr;
     }
-    auto const& id = *it++;
+    auto const& id = *next_id;
     auto store = cached_stores.get_store(id);
 
     if (id->level_name() == "run") {

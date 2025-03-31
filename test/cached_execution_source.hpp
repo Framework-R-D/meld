@@ -10,6 +10,7 @@
 // ===================================================================
 
 #include "meld/core/cached_product_stores.hpp"
+#include "meld/core/framework_driver.hpp"
 #include "meld/model/level_id.hpp"
 
 #include <cassert>
@@ -25,34 +26,37 @@ namespace test {
     cached_execution_source(cached_execution_source const&) = delete;
     cached_execution_source& operator=(cached_execution_source const&) = delete;
 
-    cached_execution_source()
+    void levels_to_process(meld::framework_driver<meld::level_id_ptr>& driver)
     {
       using namespace meld;
 
       auto const job_id = level_id::base_ptr();
-      levels_.push_back(job_id);
+      driver.yield(job_id);
       for (std::size_t i = 0; i != n_runs; ++i) {
         auto const run_id = job_id->make_child(i, "run");
-        levels_.push_back(run_id);
+        driver.yield(run_id);
         for (std::size_t j = 0; j != n_subruns; ++j) {
           auto const subrun_id = run_id->make_child(j, "subrun");
-          levels_.push_back(subrun_id);
+          driver.yield(subrun_id);
           for (std::size_t k = 0; k != n_events; ++k) {
             auto event_id = subrun_id->make_child(k, "event");
-            levels_.push_back(event_id);
+            driver.yield(event_id);
           }
         }
       }
-      current_ = begin(levels_);
-      assert(size(levels_) == 1 + n_runs * (1 + n_subruns * (1 + n_events)));
+    }
+
+    cached_execution_source() : driver_{[this](auto& driver) { this->levels_to_process(driver); }}
+    {
     }
 
     meld::product_store_ptr next(meld::cached_product_stores& cached_stores)
     {
-      if (current_ == end(levels_)) {
+      auto next = driver_();
+      if (not next) {
         return nullptr;
       }
-      auto const id = *current_++;
+      auto const id = *next;
 
       auto store = cached_stores.get_store(id);
       if (id->level_name() == "run") {
@@ -68,8 +72,7 @@ namespace test {
     }
 
   private:
-    std::vector<meld::level_id_ptr> levels_;
-    decltype(levels_)::iterator current_;
+    meld::framework_driver<meld::level_id_ptr> driver_;
   };
 }
 

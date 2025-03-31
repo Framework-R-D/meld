@@ -15,6 +15,7 @@
 // =======================================================================================
 
 #include "meld/core/cached_product_stores.hpp"
+#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -24,7 +25,6 @@
 
 #include <atomic>
 #include <string>
-#include <vector>
 
 using namespace meld;
 
@@ -84,20 +84,21 @@ namespace {
 TEST_CASE("Splitting the processing", "[graph]")
 {
   constexpr auto index_limit = 2u;
-  std::vector<level_id_ptr> levels;
-  levels.reserve(index_limit + 1u);
-  levels.push_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    levels.push_back(level_id::base().make_child(i, "event"));
-  }
 
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
+  auto levels_to_process = [](auto& driver) {
+    driver.yield(level_id::base_ptr());
+    for (unsigned i = 0u; i != index_limit; ++i) {
+      driver.yield(level_id::base().make_child(i, "event"));
+    }
+  };
+
+  framework_driver<level_id_ptr> drive{levels_to_process};
+  framework_graph g{[&drive](cached_product_stores& cached_stores) mutable -> product_store_ptr {
+    auto next = drive();
+    if (not next) {
       return nullptr;
     }
-    auto const& id = *it++;
+    auto const& id = *next;
 
     auto store = cached_stores.get_store(id);
     if (store->id()->level_name() == "event") {

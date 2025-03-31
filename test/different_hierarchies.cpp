@@ -27,6 +27,7 @@
 // =======================================================================================
 
 #include "meld/core/cached_product_stores.hpp"
+#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -42,35 +43,44 @@ using namespace meld;
 
 namespace {
   void add(std::atomic<unsigned int>& counter, unsigned int number) { counter += number; }
+
+  // job -> run -> event levels
+  constexpr auto index_limit = 2u;
+  constexpr auto number_limit = 5u;
+
+  // job -> trigger primitive levels
+  constexpr auto primitive_limit = 10u;
+
+  void levels_to_process(framework_driver<level_id_ptr>& driver)
+  {
+    auto job_id = level_id::base_ptr();
+    driver.yield(job_id);
+
+    // job -> run -> event levels
+    for (unsigned i = 0u; i != index_limit; ++i) {
+      auto run_id = job_id->make_child(i, "run");
+      driver.yield(run_id);
+      for (unsigned j = 0u; j != number_limit; ++j) {
+        driver.yield(run_id->make_child(j, "event"));
+      }
+    }
+
+    // job -> trigger primitive levels
+    for (unsigned i = 0u; i != primitive_limit; ++i) {
+      driver.yield(job_id->make_child(i, "trigger primitive"));
+    }
+  }
 }
 
 TEST_CASE("Different hierarchies used with fold", "[graph]")
 {
-  // job -> run -> event levels
-  constexpr auto index_limit = 2u;
-  constexpr auto number_limit = 5u;
-  std::vector<level_id_ptr> levels;
-  auto job_id = levels.emplace_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    auto run_id = levels.emplace_back(job_id->make_child(i, "run"));
-    for (unsigned j = 0u; j != number_limit; ++j) {
-      levels.push_back(run_id->make_child(j, "event"));
-    }
-  }
-
-  // job -> trigger primitive levels
-  constexpr auto primitive_limit = 10u;
-  for (unsigned i = 0u; i != primitive_limit; ++i) {
-    levels.push_back(job_id->make_child(i, "trigger primitive"));
-  }
-
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
+  framework_driver<level_id_ptr> drive{levels_to_process};
+  framework_graph g{[&drive](cached_product_stores& cached_stores) mutable -> product_store_ptr {
+    auto next = drive();
+    if (not next) {
       return nullptr;
     }
-    auto const& id = *it++;
+    auto const& id = *next;
 
     auto store = cached_stores.get_store(id);
     // Insert a "number" for either events or trigger primitives

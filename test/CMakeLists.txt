@@ -42,6 +42,7 @@ endfunction()
 add_unit_test(concepts LIBRARIES meld::core)
 add_unit_test(string_literal LIBRARIES meld::utilities)
 add_unit_test(type_deduction LIBRARIES meld::metaprogramming)
+add_unit_test(yielding_driver LIBRARIES meld::core TBB::tbb)
 
 add_catch_test(allowed_families LIBRARIES meld::core Boost::json TEST_DOT_GRAPH)
 add_catch_test(cached_execution LIBRARIES meld::core Boost::json TEST_DOT_GRAPH)
