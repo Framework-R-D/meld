@@ -1,43 +1,35 @@
+#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
 
 #include "catch2/catch_all.hpp"
 
+#include <iostream>
+
 using namespace meld;
 using namespace oneapi::tbb;
 
 namespace {
-  class source {
-  public:
-    source()
-    {
-      auto& base = levels_.emplace_back(level_id::base_ptr());
-      auto& run = levels_.emplace_back(base->make_child(0, "run"));
-      auto& subrun = levels_.emplace_back(run->make_child(0, "subrun"));
-      levels_.emplace_back(subrun->make_child(0, "event"));
-      it_ = begin(levels_);
-    }
 
-    // Not copyable due to iterator it_
-    source(source const&) = delete;
-    source& operator=(source const&) = delete;
+  void levels_to_process(framework_driver<product_store_ptr>& driver)
+  {
+    auto job_store = product_store::base();
+    job_store->add_product("id", *job_store->id());
+    driver.yield(job_store);
 
-    product_store_ptr next(cached_product_stores& stores)
-    {
-      if (it_ == levels_.end()) {
-        return nullptr;
-      }
+    auto run_store = job_store->make_child(0, "run");
+    run_store->add_product("id", *run_store->id());
+    driver.yield(run_store);
 
-      auto store = stores.get_store(*it_++);
-      store->add_product("id", *store->id());
-      return store;
-    }
+    auto subrun_store = run_store->make_child(0, "subrun");
+    subrun_store->add_product("id", *subrun_store->id());
+    driver.yield(subrun_store);
 
-  private:
-    std::vector<level_id_ptr> levels_;
-    std::vector<level_id_ptr>::const_iterator it_;
-  };
+    auto event_store = subrun_store->make_child(0, "event");
+    event_store->add_product("id", *event_store->id());
+    driver.yield(event_store);
+  }
 
   void check_two_ids(level_id const& parent_id, level_id const& id)
   {
@@ -61,8 +53,14 @@ namespace {
 
 TEST_CASE("Testing families", "[data model]")
 {
-  source src;
-  framework_graph g{[&src](cached_product_stores& stores) mutable { return src.next(stores); }, 1};
+  framework_driver drive{levels_to_process};
+  framework_graph g{[&drive](cached_product_stores&) mutable -> product_store_ptr {
+                      if (auto next = drive()) {
+                        return *next;
+                      }
+                      return nullptr;
+                    },
+                    2};
   g.with("se", check_two_ids).observe("id"_in("subrun"), "id").for_each("event");
   g.with("rs", check_two_ids).observe("id"_in("run"), "id").for_each("subrun");
   g.with("rse", check_three_ids).observe("id"_in("run"), "id"_in("subrun"), "id").for_each("event");

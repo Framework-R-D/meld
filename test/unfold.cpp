@@ -14,7 +14,6 @@
 // source/multiplexer.
 // =======================================================================================
 
-#include "meld/core/cached_product_stores.hpp"
 #include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
@@ -24,6 +23,7 @@
 #include "catch2/catch_all.hpp"
 
 #include <atomic>
+#include <ranges>
 #include <string>
 
 using namespace meld;
@@ -85,27 +85,23 @@ TEST_CASE("Splitting the processing", "[graph]")
 {
   constexpr auto index_limit = 2u;
 
-  auto levels_to_process = [](auto& driver) {
-    driver.yield(level_id::base_ptr());
-    for (unsigned i = 0u; i != index_limit; ++i) {
-      driver.yield(level_id::base().make_child(i, "event"));
+  auto levels_to_process = [index_limit](auto& driver) {
+    auto job_store = product_store::base();
+    driver.yield(job_store);
+    for (unsigned i : std::views::iota(0u, index_limit)) {
+      auto event_store = job_store->make_child(i, "event");
+      event_store->add_product<unsigned>("max_number", 10u * (i + 1));
+      event_store->add_product<numbers_t>("ten_numbers", numbers_t(10, i + 1));
+      driver.yield(event_store);
     }
   };
 
-  framework_driver<level_id_ptr> drive{levels_to_process};
-  framework_graph g{[&drive](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    auto next = drive();
-    if (not next) {
-      return nullptr;
+  framework_driver<product_store_ptr> drive{levels_to_process};
+  framework_graph g{[&drive](cached_product_stores&) mutable -> product_store_ptr {
+    if (auto next = drive()) {
+      return *next;
     }
-    auto const& id = *next;
-
-    auto store = cached_stores.get_store(id);
-    if (store->id()->level_name() == "event") {
-      store->add_product<unsigned>("max_number", 10u * (id->number() + 1));
-      store->add_product<numbers_t>("ten_numbers", numbers_t(10, id->number() + 1));
-    }
-    return store;
+    return nullptr;
   }};
 
   g.with<iota>(&iota::predicate, &iota::unfold, concurrency::unlimited)

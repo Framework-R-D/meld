@@ -6,14 +6,12 @@
 //
 //  1 run
 //    2 subruns per run
-//      5 events per subrun
+//      5000 events per subrun
 // ===================================================================
 
-#include "meld/core/cached_product_stores.hpp"
 #include "meld/core/framework_driver.hpp"
-#include "meld/model/level_id.hpp"
 
-#include <cassert>
+#include <ranges>
 
 namespace test {
   inline constexpr std::size_t n_runs{1};
@@ -26,21 +24,27 @@ namespace test {
     cached_execution_source(cached_execution_source const&) = delete;
     cached_execution_source& operator=(cached_execution_source const&) = delete;
 
-    void levels_to_process(meld::framework_driver<meld::level_id_ptr>& driver)
+    void levels_to_process(meld::framework_driver<meld::product_store_ptr>& driver)
     {
       using namespace meld;
 
-      auto const job_id = level_id::base_ptr();
-      driver.yield(job_id);
-      for (std::size_t i = 0; i != n_runs; ++i) {
-        auto const run_id = job_id->make_child(i, "run");
-        driver.yield(run_id);
-        for (std::size_t j = 0; j != n_subruns; ++j) {
-          auto const subrun_id = run_id->make_child(j, "subrun");
-          driver.yield(subrun_id);
-          for (std::size_t k = 0; k != n_events; ++k) {
-            auto event_id = subrun_id->make_child(k, "event");
-            driver.yield(event_id);
+      auto job_store = product_store::base();
+      driver.yield(job_store);
+
+      for (std::size_t i : std::views::iota(0u, n_runs)) {
+        auto run_store = job_store->make_child(i, "run");
+        run_store->add_product<int>("number", 2 * i);
+        driver.yield(run_store);
+
+        for (std::size_t j : std::views::iota(0u, n_subruns)) {
+          auto subrun_store = run_store->make_child(j, "subrun");
+          subrun_store->add_product<int>("another", 3 * j);
+          driver.yield(subrun_store);
+
+          for (std::size_t k : std::views::iota(0u, n_events)) {
+            auto event_store = subrun_store->make_child(k, "event");
+            event_store->add_product<int>("still", 4 * k);
+            driver.yield(event_store);
           }
         }
       }
@@ -50,29 +54,16 @@ namespace test {
     {
     }
 
-    meld::product_store_ptr next(meld::cached_product_stores& cached_stores)
+    meld::product_store_ptr next()
     {
-      auto next = driver_();
-      if (not next) {
-        return nullptr;
+      if (auto next = driver_()) {
+        return *next;
       }
-      auto const id = *next;
-
-      auto store = cached_stores.get_store(id);
-      if (id->level_name() == "run") {
-        store->add_product<int>("number", 2 * store->id()->number());
-      }
-      if (id->level_name() == "subrun") {
-        store->add_product<int>("another", 3 * store->id()->number());
-      }
-      if (id->level_name() == "event") {
-        store->add_product<int>("still", 4 * store->id()->number());
-      }
-      return store;
+      return nullptr;
     }
 
   private:
-    meld::framework_driver<meld::level_id_ptr> driver_;
+    meld::framework_driver<meld::product_store_ptr> driver_;
   };
 }
 

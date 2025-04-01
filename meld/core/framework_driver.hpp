@@ -1,9 +1,11 @@
 #ifndef meld_core_framework_driver_hpp
 #define meld_core_framework_driver_hpp
 
+#include "spdlog/spdlog.h"
 #include "tbb/task.h"
 #include "tbb/task_group.h"
 
+#include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <mutex>
@@ -21,6 +23,8 @@ namespace meld {
     {
     }
     framework_driver(void (*ft)(framework_driver<RT>&)) : driver_{ft} {}
+
+    ~framework_driver() { group_.wait(); }
 
     std::optional<RT> operator()()
     {
@@ -43,9 +47,10 @@ namespace meld {
 
     void yield(RT rt)
     {
-      tbb::task::suspend([&](tbb::task::suspend_point sp) {
+      tbb::task::suspend([this, current = std::move(rt)](tbb::task::suspend_point sp) {
         sp_ = sp;
-        current_ = std::make_optional(std::move(rt));
+        current_ = std::make_optional(std::move(current));
+        std::unique_lock lock{mutex_};
         cv_.notify_one();
       });
     }
@@ -53,7 +58,7 @@ namespace meld {
   private:
     std::function<void(framework_driver&)> driver_;
     std::optional<RT> current_;
-    states gear_ = states::off;
+    std::atomic<states> gear_ = states::off;
     tbb::task_group group_;
     tbb::task::suspend_point sp_;
     std::mutex mutex_;

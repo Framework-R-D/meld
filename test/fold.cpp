@@ -33,6 +33,7 @@
 #include "spdlog/spdlog.h"
 
 #include <atomic>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -47,31 +48,27 @@ TEST_CASE("Different levels of fold", "[graph]")
   constexpr auto index_limit = 2u;
   constexpr auto number_limit = 5u;
 
-  auto levels_to_process = [](framework_driver<level_id_ptr>& driver) {
-    auto job_id = level_id::base_ptr();
-    driver.yield(job_id);
-    for (unsigned i = 0u; i != index_limit; ++i) {
-      auto run_id = job_id->make_child(i, "run");
-      driver.yield(run_id);
-      for (unsigned j = 0u; j != number_limit; ++j) {
-        driver.yield(run_id->make_child(j, "event"));
+  auto levels_to_process = [index_limit,
+                            number_limit](framework_driver<product_store_ptr>& driver) {
+    auto job_store = product_store::base();
+    driver.yield(job_store);
+    for (unsigned i : std::views::iota(0u, index_limit)) {
+      auto run_store = job_store->make_child(i, "run");
+      driver.yield(run_store);
+      for (unsigned j : std::views::iota(0u, number_limit)) {
+        auto event_store = run_store->make_child(j, "event");
+        event_store->add_product("number", j);
+        driver.yield(event_store);
       }
     }
   };
 
-  framework_driver<level_id_ptr> drive{levels_to_process};
-  framework_graph g{[&drive](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    auto next = drive();
-    if (not next) {
-      return nullptr;
+  framework_driver<product_store_ptr> drive{levels_to_process};
+  framework_graph g{[&drive](cached_product_stores&) mutable -> product_store_ptr {
+    if (auto next = drive()) {
+      return *next;
     }
-    auto const& id = *next;
-
-    auto store = cached_stores.get_store(id);
-    if (id->level_name() == "event") {
-      store->add_product<unsigned>("number", id->number());
-    }
-    return store;
+    return nullptr;
   }};
 
   g.with("run_add", add, concurrency::unlimited).fold("number").partitioned_by("run").to("run_sum");
