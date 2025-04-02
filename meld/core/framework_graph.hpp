@@ -107,7 +107,7 @@ namespace meld {
     level_hierarchy hierarchy_{};
     node_catalog nodes_{};
     tbb::flow::graph graph_{};
-    framework_driver<product_store_ptr> driver_;
+    framework_driver driver_;
     std::vector<std::string> registration_errors_{};
     std::map<std::string, filter> filters_{};
     tbb::flow::input_node<message> src_;

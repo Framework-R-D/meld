@@ -1,5 +1,5 @@
-#ifndef meld_core_framework_driver_hpp
-#define meld_core_framework_driver_hpp
+#ifndef meld_utilities_async_driver_hpp
+#define meld_utilities_async_driver_hpp
 
 #include "spdlog/spdlog.h"
 #include "tbb/task.h"
@@ -14,17 +14,17 @@
 namespace meld {
 
   template <typename RT>
-  class framework_driver {
+  class async_driver {
     enum class states { off, drive, park };
 
   public:
     template <typename FT>
-    framework_driver(FT ft) : driver_{std::move(ft)}
+    async_driver(FT ft) : driver_{std::move(ft)}
     {
     }
-    framework_driver(void (*ft)(framework_driver<RT>&)) : driver_{ft} {}
+    async_driver(void (*ft)(async_driver<RT>&)) : driver_{ft} {}
 
-    ~framework_driver() { group_.wait(); }
+    ~async_driver() { group_.wait(); }
 
     std::optional<RT> operator()()
     {
@@ -56,7 +56,7 @@ namespace meld {
     }
 
   private:
-    std::function<void(framework_driver&)> driver_;
+    std::function<void(async_driver&)> driver_;
     std::optional<RT> current_;
     std::atomic<states> gear_ = states::off;
     tbb::task_group group_;
@@ -67,4 +67,4 @@ namespace meld {
 
 }
 
-#endif // meld_core_framework_driver_hpp
+#endif // meld_utilities_async_driver_hpp

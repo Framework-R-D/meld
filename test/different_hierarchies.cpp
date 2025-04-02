@@ -26,9 +26,7 @@
 // stores are excluded from the fold result.
 // =======================================================================================
 
-#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
-#include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
 
 #include "catch2/catch_all.hpp"
@@ -51,7 +49,7 @@ namespace {
   // job -> trigger primitive levels
   constexpr auto primitive_limit = 10u;
 
-  void levels_to_process(framework_driver<product_store_ptr>& driver)
+  void levels_to_process(framework_driver& driver)
   {
     auto job_store = product_store::base();
     driver.yield(job_store);

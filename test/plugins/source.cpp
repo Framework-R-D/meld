@@ -8,7 +8,7 @@ namespace {
   public:
     number_generator(meld::configuration const& config) : n_{config.get<int>("max_numbers")} {}
 
-    void next(meld::framework_driver<meld::product_store_ptr>& driver) const
+    void next(meld::framework_driver& driver) const
     {
       auto job_store = meld::product_store::base();
       driver.yield(job_store);

@@ -1,5 +1,5 @@
-#include "meld/core/framework_driver.hpp"
 #include "meld/model/level_id.hpp"
+#include "meld/utilities/async_driver.hpp"
 
 #include "spdlog/spdlog.h"
 #include "tbb/flow_graph.h"
@@ -12,7 +12,7 @@
 
 using namespace meld;
 
-void levels_to_process(framework_driver<level_id_ptr>& d)
+void levels_to_process(async_driver<level_id_ptr>& d)
 {
   unsigned int const num_runs = 2;
   unsigned int const num_subruns = 2;
@@ -35,7 +35,7 @@ void levels_to_process(framework_driver<level_id_ptr>& d)
 
 int main()
 {
-  framework_driver<level_id_ptr> drive{levels_to_process};
+  async_driver<level_id_ptr> drive{levels_to_process};
   tbb::flow::graph g{};
   tbb::flow::input_node source{g, [&drive](tbb::flow_control& fc) -> level_id_ptr {
                                  if (auto next = drive()) {

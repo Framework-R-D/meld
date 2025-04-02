@@ -9,7 +9,7 @@
 //      5000 events per subrun
 // ===================================================================
 
-#include "meld/core/framework_driver.hpp"
+#include "meld/source.hpp"
 
 #include <ranges>
 
@@ -20,7 +20,7 @@ namespace test {
 
   class cached_execution_source {
   public:
-    void next(meld::framework_driver<meld::product_store_ptr>& driver)
+    void next(meld::framework_driver& driver)
     {
       using namespace meld;
 

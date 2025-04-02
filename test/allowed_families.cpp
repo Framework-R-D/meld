@@ -1,4 +1,3 @@
-#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -12,7 +11,7 @@ using namespace oneapi::tbb;
 
 namespace {
 
-  void levels_to_process(framework_driver<product_store_ptr>& driver)
+  void levels_to_process(framework_driver& driver)
   {
     auto job_store = product_store::base();
     job_store->add_product("id", *job_store->id());

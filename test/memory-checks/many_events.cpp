@@ -1,4 +1,3 @@
-#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/product_store.hpp"
 #include "test/products_for_output.hpp"
@@ -15,7 +14,7 @@ int main()
   // constexpr auto max_events{1'000'000u};
   // spdlog::flush_on(spdlog::level::trace);
 
-  auto levels_to_process = [](framework_driver<product_store_ptr>& driver){
+  auto levels_to_process = [](framework_driver& driver) {
     auto job_store = product_store::base();
     driver.yield(job_store);
 
@@ -25,7 +24,6 @@ int main()
       driver.yield(event_store);
     }
   };
-
 
   framework_graph g{levels_to_process};
   g.with(pass_on, concurrency::unlimited).transform("number").to("different");

@@ -33,8 +33,7 @@ namespace meld {
   std::size_t level_sentry::depth() const noexcept { return depth_; }
 
   framework_graph::framework_graph(product_store_ptr store, int const max_parallelism) :
-    framework_graph{[store](framework_driver<product_store_ptr>& driver) { driver.yield(store); },
-                    max_parallelism}
+    framework_graph{[store](framework_driver& driver) { driver.yield(store); }, max_parallelism}
   {
   }
 

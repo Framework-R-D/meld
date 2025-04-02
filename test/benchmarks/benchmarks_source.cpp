@@ -16,7 +16,7 @@ namespace test {
       spdlog::info("Processing {} events", max_);
     }
 
-    void next(meld::framework_driver<meld::product_store_ptr>& driver) const
+    void next(meld::framework_driver& driver) const
     {
       auto job_store = meld::product_store::base();
       driver.yield(job_store);

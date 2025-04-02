@@ -4,12 +4,15 @@
 #include "boost/dll/alias.hpp"
 
 #include "meld/configuration.hpp"
-#include "meld/core/cached_product_stores.hpp"
-#include "meld/core/framework_driver.hpp"
 #include "meld/model/product_store.hpp"
+#include "meld/utilities/async_driver.hpp"
 
 #include <concepts>
 #include <memory>
+
+namespace meld {
+  using framework_driver = async_driver<product_store_ptr>;
+}
 
 namespace meld::detail {
 
@@ -26,7 +29,7 @@ namespace meld::detail {
   }
 
   template <typename T>
-  concept next_function_with_driver = requires(T t, framework_driver<product_store_ptr>& driver) {
+  concept next_function_with_driver = requires(T t, framework_driver& driver) {
     { t.next(driver) } -> std::same_as<void>;
   };
 
@@ -36,8 +39,7 @@ namespace meld::detail {
   };
 
   template <typename T>
-  std::function<void(framework_driver<product_store_ptr>&)> create_next(
-    configuration const& config = {})
+  std::function<void(framework_driver&)> create_next(configuration const& config = {})
   {
     // N.B. Because we are initializing an std::function object with a lambda, the lambda
     //      (and therefore its captured values) must be copy-constructible.  This means
@@ -48,19 +50,17 @@ namespace meld::detail {
     //      implementations of the source class' copy/move constructors (e.g. if the
     //      source is caching an iterator).
     if constexpr (next_function_with_driver<T>) {
-      return
-        [t = make<T>(config)](framework_driver<product_store_ptr>& driver) { t->next(driver); };
+      return [t = make<T>(config)](framework_driver& driver) { t->next(driver); };
     }
     else if (next_function_without_driver<T>) {
-      return [t = make<T>(config)](framework_driver<product_store_ptr>&) { t->next(); };
+      return [t = make<T>(config)](framework_driver&) { t->next(); };
     }
     else {
       static_assert(false, "Must have a 'next()' function that returns 'void'");
     }
   }
 
-  // using next_store_t = std::function<product_store_ptr(cached_product_stores&)>;
-  using next_store_t = std::function<void(framework_driver<product_store_ptr>&)>;
+  using next_store_t = std::function<void(framework_driver&)>;
   using source_creator_t = next_store_t(configuration const&);
 }
 

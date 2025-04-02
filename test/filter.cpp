@@ -12,7 +12,7 @@ namespace {
   public:
     explicit source(unsigned const max_n) : max_{max_n} {}
 
-    void operator()(framework_driver<product_store_ptr>& driver)
+    void operator()(framework_driver& driver)
     {
       auto job_store = product_store::base();
       driver.yield(job_store);
