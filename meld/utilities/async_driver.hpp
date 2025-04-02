@@ -6,9 +6,7 @@
 #include "tbb/task_group.h"
 
 #include <atomic>
-#include <condition_variable>
 #include <functional>
-#include <mutex>
 #include <optional>
 
 namespace meld {
@@ -32,26 +30,35 @@ namespace meld {
         group_.run([&] {
           driver_(*this);
           gear_ = states::park;
-          cv_.notify_one();
+          if (call_sp_ != tbb::task::suspend_point{}) {
+            tbb::task::resume(call_sp_.exchange({}));
+          }
         });
         gear_ = states::drive;
       }
-      else {
-        tbb::task::resume(sp_);
+
+      tbb::task::suspend([this](tbb::task::suspend_point call_sp) {
+        call_sp_ = call_sp;
+        if (yield_sp_ != tbb::task::suspend_point{}) {
+          tbb::task::resume(yield_sp_.exchange({}));
+        }
+      });
+
+      if (gear_ == states::park) {
+        return std::nullopt;
       }
 
-      std::unique_lock lock{mutex_};
-      cv_.wait(lock, [&] { return current_.has_value() or gear_ == states::park; });
       return std::exchange(current_, std::nullopt);
     }
 
     void yield(RT rt)
     {
-      tbb::task::suspend([this, current = std::move(rt)](tbb::task::suspend_point sp) {
-        sp_ = sp;
+      tbb::task::suspend([this, current = std::move(rt)](tbb::task::suspend_point yield_sp) {
+        yield_sp_ = yield_sp;
         current_ = std::make_optional(std::move(current));
-        std::unique_lock lock{mutex_};
-        cv_.notify_one();
+        if (call_sp_ != tbb::task::suspend_point{}) {
+          tbb::task::resume(call_sp_.exchange({}));
+        }
       });
     }
 
@@ -60,9 +67,8 @@ namespace meld {
     std::optional<RT> current_;
     std::atomic<states> gear_ = states::off;
     tbb::task_group group_;
-    tbb::task::suspend_point sp_;
-    std::mutex mutex_;
-    std::condition_variable cv_;
+    std::atomic<tbb::task::suspend_point> yield_sp_;
+    std::atomic<tbb::task::suspend_point> call_sp_;
   };
 
 }
