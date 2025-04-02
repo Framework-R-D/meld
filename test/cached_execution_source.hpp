@@ -6,13 +6,12 @@
 //
 //  1 run
 //    2 subruns per run
-//      5 events per subrun
+//      5000 events per subrun
 // ===================================================================
 
-#include "meld/core/cached_product_stores.hpp"
-#include "meld/model/level_id.hpp"
+#include "meld/source.hpp"
 
-#include <cassert>
+#include <ranges>
 
 namespace test {
   inline constexpr std::size_t n_runs{1};
@@ -21,55 +20,31 @@ namespace test {
 
   class cached_execution_source {
   public:
-    // Uncopyable due to iterator
-    cached_execution_source(cached_execution_source const&) = delete;
-    cached_execution_source& operator=(cached_execution_source const&) = delete;
-
-    cached_execution_source()
+    void next(meld::framework_driver& driver)
     {
       using namespace meld;
 
-      auto const job_id = level_id::base_ptr();
-      levels_.push_back(job_id);
-      for (std::size_t i = 0; i != n_runs; ++i) {
-        auto const run_id = job_id->make_child(i, "run");
-        levels_.push_back(run_id);
-        for (std::size_t j = 0; j != n_subruns; ++j) {
-          auto const subrun_id = run_id->make_child(j, "subrun");
-          levels_.push_back(subrun_id);
-          for (std::size_t k = 0; k != n_events; ++k) {
-            auto event_id = subrun_id->make_child(k, "event");
-            levels_.push_back(event_id);
+      auto job_store = product_store::base();
+      driver.yield(job_store);
+
+      for (std::size_t i : std::views::iota(0u, n_runs)) {
+        auto run_store = job_store->make_child(i, "run");
+        run_store->add_product<int>("number", 2 * i);
+        driver.yield(run_store);
+
+        for (std::size_t j : std::views::iota(0u, n_subruns)) {
+          auto subrun_store = run_store->make_child(j, "subrun");
+          subrun_store->add_product<int>("another", 3 * j);
+          driver.yield(subrun_store);
+
+          for (std::size_t k : std::views::iota(0u, n_events)) {
+            auto event_store = subrun_store->make_child(k, "event");
+            event_store->add_product<int>("still", 4 * k);
+            driver.yield(event_store);
           }
         }
       }
-      current_ = begin(levels_);
-      assert(size(levels_) == 1 + n_runs * (1 + n_subruns * (1 + n_events)));
     }
-
-    meld::product_store_ptr next(meld::cached_product_stores& cached_stores)
-    {
-      if (current_ == end(levels_)) {
-        return nullptr;
-      }
-      auto const id = *current_++;
-
-      auto store = cached_stores.get_store(id);
-      if (id->level_name() == "run") {
-        store->add_product<int>("number", 2 * store->id()->number());
-      }
-      if (id->level_name() == "subrun") {
-        store->add_product<int>("another", 3 * store->id()->number());
-      }
-      if (id->level_name() == "event") {
-        store->add_product<int>("still", 4 * store->id()->number());
-      }
-      return store;
-    }
-
-  private:
-    std::vector<meld::level_id_ptr> levels_;
-    decltype(levels_)::iterator current_;
   };
 }
 

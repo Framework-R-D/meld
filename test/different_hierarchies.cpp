@@ -26,15 +26,14 @@
 // stores are excluded from the fold result.
 // =======================================================================================
 
-#include "meld/core/cached_product_stores.hpp"
 #include "meld/core/framework_graph.hpp"
-#include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
 
 #include "catch2/catch_all.hpp"
 #include "spdlog/spdlog.h"
 
 #include <atomic>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -42,47 +41,46 @@ using namespace meld;
 
 namespace {
   void add(std::atomic<unsigned int>& counter, unsigned int number) { counter += number; }
+
+  // job -> run -> event levels
+  constexpr auto index_limit = 2u;
+  constexpr auto number_limit = 5u;
+
+  // job -> trigger primitive levels
+  constexpr auto primitive_limit = 10u;
+
+  void levels_to_process(framework_driver& driver)
+  {
+    auto job_store = product_store::base();
+    driver.yield(job_store);
+
+    // job -> run -> event levels
+    for (unsigned i : std::views::iota(0u, index_limit)) {
+      auto run_store = job_store->make_child(i, "run");
+      driver.yield(run_store);
+      for (unsigned j : std::views::iota(0u, number_limit)) {
+        auto event_store = run_store->make_child(j, "event");
+        event_store->add_product("number", j);
+        driver.yield(event_store);
+      }
+    }
+
+    // job -> trigger primitive levels
+    for (unsigned i : std::views::iota(0u, primitive_limit)) {
+      auto tp_store = job_store->make_child(i, "trigger primitive");
+      tp_store->add_product("number", i);
+      driver.yield(tp_store);
+    }
+  }
 }
 
 TEST_CASE("Different hierarchies used with fold", "[graph]")
 {
-  // job -> run -> event levels
-  constexpr auto index_limit = 2u;
-  constexpr auto number_limit = 5u;
-  std::vector<level_id_ptr> levels;
-  auto job_id = levels.emplace_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    auto run_id = levels.emplace_back(job_id->make_child(i, "run"));
-    for (unsigned j = 0u; j != number_limit; ++j) {
-      levels.push_back(run_id->make_child(j, "event"));
-    }
-  }
-
-  // job -> trigger primitive levels
-  constexpr auto primitive_limit = 10u;
-  for (unsigned i = 0u; i != primitive_limit; ++i) {
-    levels.push_back(job_id->make_child(i, "trigger primitive"));
-  }
-
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
-      return nullptr;
-    }
-    auto const& id = *it++;
-
-    auto store = cached_stores.get_store(id);
-    // Insert a "number" for either events or trigger primitives
-    if (id->level_name() == "event" or id->level_name() == "trigger primitive") {
-      store->add_product<unsigned>("number", id->number());
-    }
-    return store;
-  }};
+  framework_graph g{levels_to_process};
 
   g.with("run_add", add, concurrency::unlimited)
     .fold("number")
-    .for_each("run")
+    .partitioned_by("run")
     .to("run_sum")
     .initialized_with(0u);
   g.with("job_add", add, concurrency::unlimited).fold("number").to("job_sum");

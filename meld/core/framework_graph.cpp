@@ -33,38 +33,36 @@ namespace meld {
   std::size_t level_sentry::depth() const noexcept { return depth_; }
 
   framework_graph::framework_graph(product_store_ptr store, int const max_parallelism) :
-    framework_graph{[store](cached_product_stores&) mutable {
-                      // Returns non-null store, then replaces it with nullptr, thus
-                      // resulting in one graph execution.
-                      return std::exchange(store, nullptr);
-                    },
-                    max_parallelism}
-  {
-  }
-
-  framework_graph::framework_graph(std::function<product_store_ptr()> f,
-                                   int const max_parallelism) :
-    framework_graph{[ft = std::move(f)](cached_product_stores&) mutable { return ft(); },
-                    max_parallelism}
+    framework_graph{[store](framework_driver& driver) { driver.yield(store); }, max_parallelism}
   {
   }
 
   // FIXME: The algorithm below should support user-specified flush stores.
   framework_graph::framework_graph(detail::next_store_t next_store, int const max_parallelism) :
     parallelism_limit_{static_cast<std::size_t>(max_parallelism)},
+    driver_{std::move(next_store)},
     src_{graph_,
-         [this, read_next = std::move(next_store)](tbb::flow_control& fc) mutable -> message {
-           auto store = read_next(stores_);
-           if (not store) {
+         [this](tbb::flow_control& fc) mutable -> message {
+           auto item = driver_();
+           if (not item) {
              drain();
              fc.stop();
              return {};
            }
+           auto store = *item;
            assert(not store->is_flush());
            return sender_.make_message(accept(std::move(store)));
          }},
     multiplexer_{graph_}
   {
+    // FIXME: This requirement is in place so that the yielding driver can be used.
+    //        At least 2 threads are required for that to work.
+    //        It would be better if the specified concurrency would be applied to an
+    //        arena in which the user-facing work is done.
+    if (max_parallelism < 2) {
+      throw std::runtime_error("Must choose concurrency level of at least 2.");
+    }
+
     // FIXME: Should the loading of env levels happen in the meld app only?
     spdlog::cfg::load_env_levels();
     spdlog::info("Number of worker threads: {}",

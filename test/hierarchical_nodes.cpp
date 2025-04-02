@@ -16,7 +16,6 @@
 // higher than the level processed by square and add nodes.
 // =======================================================================================
 
-#include "meld/core/cached_product_stores.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -28,12 +27,32 @@
 #include <atomic>
 #include <cmath>
 #include <ctime>
+#include <ranges>
 #include <string>
 #include <vector>
 
 using namespace meld;
 
 namespace {
+  constexpr auto index_limit = 2u;
+  constexpr auto number_limit = 5u;
+
+  void levels_to_process(framework_driver& driver)
+  {
+    auto job_store = product_store::base();
+    driver.yield(job_store);
+    for (unsigned i : std::views::iota(0u, index_limit)) {
+      auto run_store = job_store->make_child(i, "run");
+      run_store->add_product<std::time_t>("time", std::time(nullptr));
+      driver.yield(run_store);
+      for (unsigned j : std::views::iota(0u, number_limit)) {
+        auto event_store = run_store->make_child(j, "event");
+        event_store->add_product("number", i + j);
+        driver.yield(event_store);
+      }
+    }
+  }
+
   auto square(unsigned int const num) { return num * num; }
 
   struct data_for_rms {
@@ -80,42 +99,15 @@ namespace {
 
 TEST_CASE("Hierarchical nodes", "[graph]")
 {
-  constexpr auto index_limit = 2u;
-  constexpr auto number_limit = 5u;
-  std::vector<level_id_ptr> levels;
-  levels.reserve(1 + index_limit * (number_limit + 1u));
-  levels.push_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    auto id = level_id::base().make_child(i, "run");
-    levels.push_back(id);
-    for (unsigned j = 0u; j != number_limit; ++j) {
-      levels.push_back(id->make_child(j, "event"));
-    }
-  }
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
-      return nullptr;
-    }
-    auto const& id = *it++;
-    auto store = cached_stores.get_store(id);
-
-    if (id->level_name() == "run") {
-      store->add_product<std::time_t>("time", std::time(nullptr));
-    }
-    if (id->level_name() == "event") {
-      store->add_product<unsigned>("number", id->number() + id->parent()->number());
-    }
-    return store;
-  }};
+  framework_graph g{levels_to_process};
 
   g.with("get_the_time", strtime, concurrency::unlimited).when().transform("time").to("strtime");
   g.with(square, concurrency::unlimited).transform("number").to("squared_number");
-  g.with(add, concurrency::unlimited)
+
+  g.with("add", add, concurrency::unlimited)
     .when()
     .fold("squared_number")
-    .for_each("run")
+    .partitioned_by("run")
     .to("added_data")
     .initialized_with(15u);
 

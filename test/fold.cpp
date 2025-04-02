@@ -23,7 +23,6 @@
 */
 // =======================================================================================
 
-#include "meld/core/cached_product_stores.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -32,6 +31,7 @@
 #include "spdlog/spdlog.h"
 
 #include <atomic>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -45,32 +45,25 @@ TEST_CASE("Different levels of fold", "[graph]")
 {
   constexpr auto index_limit = 2u;
   constexpr auto number_limit = 5u;
-  std::vector<level_id_ptr> levels;
-  levels.reserve(1 + index_limit * (number_limit + 1u));
-  auto job_id = levels.emplace_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    auto run_id = levels.emplace_back(job_id->make_child(i, "run"));
-    for (unsigned j = 0u; j != number_limit; ++j) {
-      levels.push_back(run_id->make_child(j, "event"));
-    }
-  }
 
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
-      return nullptr;
+  auto levels_to_process = [index_limit, number_limit](framework_driver& driver) {
+    auto job_store = product_store::base();
+    driver.yield(job_store);
+    for (unsigned i : std::views::iota(0u, index_limit)) {
+      auto run_store = job_store->make_child(i, "run");
+      driver.yield(run_store);
+      for (unsigned j : std::views::iota(0u, number_limit)) {
+        auto event_store = run_store->make_child(j, "event");
+        event_store->add_product("number", j);
+        driver.yield(event_store);
+      }
     }
-    auto const& id = *it++;
+  };
 
-    auto store = cached_stores.get_store(id);
-    if (id->level_name() == "event") {
-      store->add_product<unsigned>("number", id->number());
-    }
-    return store;
-  }};
+  // framework_graph g{levels_to_process};
+  framework_graph g{levels_to_process};
 
-  g.with("run_add", add, concurrency::unlimited).fold("number").for_each("run").to("run_sum");
+  g.with("run_add", add, concurrency::unlimited).fold("number").partitioned_by("run").to("run_sum");
   g.with("job_add", add, concurrency::unlimited).fold("number").to("job_sum");
 
   g.with("two_layer_job_add", add, concurrency::unlimited).fold("run_sum").to("two_layer_job_sum");

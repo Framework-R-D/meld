@@ -14,7 +14,6 @@
 // source/multiplexer.
 // =======================================================================================
 
-#include "meld/core/cached_product_stores.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -23,8 +22,8 @@
 #include "catch2/catch_all.hpp"
 
 #include <atomic>
+#include <ranges>
 #include <string>
-#include <vector>
 
 using namespace meld;
 
@@ -84,34 +83,25 @@ namespace {
 TEST_CASE("Splitting the processing", "[graph]")
 {
   constexpr auto index_limit = 2u;
-  std::vector<level_id_ptr> levels;
-  levels.reserve(index_limit + 1u);
-  levels.push_back(level_id::base_ptr());
-  for (unsigned i = 0u; i != index_limit; ++i) {
-    levels.push_back(level_id::base().make_child(i, "event"));
-  }
 
-  auto it = cbegin(levels);
-  auto const e = cend(levels);
-  framework_graph g{[it, e](cached_product_stores& cached_stores) mutable -> product_store_ptr {
-    if (it == e) {
-      return nullptr;
+  auto levels_to_process = [index_limit](auto& driver) {
+    auto job_store = product_store::base();
+    driver.yield(job_store);
+    for (unsigned i : std::views::iota(0u, index_limit)) {
+      auto event_store = job_store->make_child(i, "event");
+      event_store->add_product<unsigned>("max_number", 10u * (i + 1));
+      event_store->add_product<numbers_t>("ten_numbers", numbers_t(10, i + 1));
+      driver.yield(event_store);
     }
-    auto const& id = *it++;
+  };
 
-    auto store = cached_stores.get_store(id);
-    if (store->id()->level_name() == "event") {
-      store->add_product<unsigned>("max_number", 10u * (id->number() + 1));
-      store->add_product<numbers_t>("ten_numbers", numbers_t(10, id->number() + 1));
-    }
-    return store;
-  }};
+  framework_graph g{levels_to_process};
 
   g.with<iota>(&iota::predicate, &iota::unfold, concurrency::unlimited)
     .unfold("max_number")
     .into("new_number")
     .within_family("lower1");
-  g.with(add, concurrency::unlimited).fold("new_number").for_each("event").to("sum1");
+  g.with(add, concurrency::unlimited).fold("new_number").partitioned_by("event").to("sum1");
   g.with(check_sum, concurrency::unlimited).observe("sum1");
 
   g.with<iterate_through>(
@@ -119,7 +109,10 @@ TEST_CASE("Splitting the processing", "[graph]")
     .unfold("ten_numbers")
     .into("each_number")
     .within_family("lower2");
-  g.with(add_numbers, concurrency::unlimited).fold("each_number").for_each("event").to("sum2");
+  g.with(add_numbers, concurrency::unlimited)
+    .fold("each_number")
+    .partitioned_by("event")
+    .to("sum2");
   g.with(check_sum_same, concurrency::unlimited).observe("sum2");
 
   g.make<test::products_for_output>().output_with(&test::products_for_output::save,

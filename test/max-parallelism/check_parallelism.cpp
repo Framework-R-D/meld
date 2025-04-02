@@ -19,19 +19,13 @@ using namespace meld;
 namespace {
   class send_parallelism {
   public:
-    meld::product_store_ptr next()
+    void next(framework_driver& driver)
     {
-      if (executed_) {
-        return nullptr;
-      }
-      executed_ = true;
-      auto store = product_store::base();
-      store->add_product("max_parallelism", concurrency::max_allowed_parallelism::active_value());
-      return store;
+      auto job_store = product_store::base();
+      job_store->add_product("max_parallelism",
+                             concurrency::max_allowed_parallelism::active_value());
+      driver.yield(job_store);
     }
-
-  private:
-    bool executed_{false};
   };
 }
 
