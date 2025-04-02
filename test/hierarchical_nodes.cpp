@@ -100,13 +100,7 @@ namespace {
 
 TEST_CASE("Hierarchical nodes", "[graph]")
 {
-  framework_driver drive{levels_to_process};
-  framework_graph g{[&drive](cached_product_stores&) mutable -> product_store_ptr {
-    if (auto next = drive()) {
-      return *next;
-    }
-    return nullptr;
-  }};
+  framework_graph g{levels_to_process};
 
   g.with("get_the_time", strtime, concurrency::unlimited).when().transform("time").to("strtime");
   g.with(square, concurrency::unlimited).transform("number").to("squared_number");

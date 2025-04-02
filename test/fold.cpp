@@ -23,8 +23,6 @@
 */
 // =======================================================================================
 
-#include "meld/core/cached_product_stores.hpp"
-#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -63,13 +61,8 @@ TEST_CASE("Different levels of fold", "[graph]")
     }
   };
 
-  framework_driver<product_store_ptr> drive{levels_to_process};
-  framework_graph g{[&drive](cached_product_stores&) mutable -> product_store_ptr {
-    if (auto next = drive()) {
-      return *next;
-    }
-    return nullptr;
-  }};
+  // framework_graph g{levels_to_process};
+  framework_graph g{levels_to_process};
 
   g.with("run_add", add, concurrency::unlimited).fold("number").partitioned_by("run").to("run_sum");
   g.with("job_add", add, concurrency::unlimited).fold("number").to("job_sum");

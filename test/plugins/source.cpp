@@ -1,30 +1,28 @@
 #include "meld/source.hpp"
 #include "meld/model/product_store.hpp"
 
+#include <ranges>
+
 namespace {
   class number_generator {
   public:
     number_generator(meld::configuration const& config) : n_{config.get<int>("max_numbers")} {}
 
-    meld::product_store_ptr next()
+    void next(meld::framework_driver<meld::product_store_ptr>& driver) const
     {
-      if (current_ == 0) {
-        ++current_;
-        return meld::product_store::base();
-      }
-      if (current_++ == n_ + 1) {
-        return nullptr;
-      }
+      auto job_store = meld::product_store::base();
+      driver.yield(job_store);
 
-      auto store = meld::product_store::base()->make_child(current_, "event");
-      store->add_product("i", current_);
-      store->add_product("j", -current_);
-      return store;
+      for (int i : std::views::iota(1, n_ + 1)) {
+        auto store = job_store->make_child(i, "event");
+        store->add_product("i", i);
+        store->add_product("j", -i);
+        driver.yield(store);
+      }
     }
 
   private:
     int n_;
-    int current_{};
   };
 }
 

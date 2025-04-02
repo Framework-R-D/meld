@@ -20,11 +20,7 @@ namespace test {
 
   class cached_execution_source {
   public:
-    // Uncopyable due to iterator
-    cached_execution_source(cached_execution_source const&) = delete;
-    cached_execution_source& operator=(cached_execution_source const&) = delete;
-
-    void levels_to_process(meld::framework_driver<meld::product_store_ptr>& driver)
+    void next(meld::framework_driver<meld::product_store_ptr>& driver)
     {
       using namespace meld;
 
@@ -49,21 +45,6 @@ namespace test {
         }
       }
     }
-
-    cached_execution_source() : driver_{[this](auto& driver) { this->levels_to_process(driver); }}
-    {
-    }
-
-    meld::product_store_ptr next()
-    {
-      if (auto next = driver_()) {
-        return *next;
-      }
-      return nullptr;
-    }
-
-  private:
-    meld::framework_driver<meld::product_store_ptr> driver_;
   };
 }
 

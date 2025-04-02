@@ -1,3 +1,4 @@
+#include "meld/core/framework_driver.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/product_store.hpp"
 #include "test/products_for_output.hpp"
@@ -14,21 +15,19 @@ int main()
   // constexpr auto max_events{1'000'000u};
   // spdlog::flush_on(spdlog::level::trace);
 
-  framework_graph g{[i = 0u]() mutable -> product_store_ptr {
-    if (i == max_events + 1) { // + 1 is for initial product store
-      return nullptr;
-    }
-    if (i == 0u) {
-      ++i;
-      return product_store::base();
-    }
+  auto levels_to_process = [](framework_driver<product_store_ptr>& driver){
+    auto job_store = product_store::base();
+    driver.yield(job_store);
 
-    auto store = product_store::base()->make_child(i, "event", "Source");
-    store->add_product("number", i);
-    ++i;
-    return store;
-  }};
+    for (unsigned int i : std::views::iota(1u, max_events + 1)) {
+      auto event_store = job_store->make_child(i, "event", "Source");
+      event_store->add_product("number", i);
+      driver.yield(event_store);
+    }
+  };
 
+
+  framework_graph g{levels_to_process};
   g.with(pass_on, concurrency::unlimited).transform("number").to("different");
   g.execute();
 }

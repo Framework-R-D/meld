@@ -12,25 +12,21 @@ namespace {
   public:
     explicit source(unsigned const max_n) : max_{max_n} {}
 
-    product_store_ptr next()
+    void operator()(framework_driver<product_store_ptr>& driver)
     {
-      if (i_ == 0) {
-        ++i_;
-        return product_store::base();
+      auto job_store = product_store::base();
+      driver.yield(job_store);
+
+      for (unsigned int i : std::views::iota(1u, max_ + 1)) {
+        auto store = job_store->make_child(i, "event");
+        store->add_product<unsigned int>("num", i - 1);
+        store->add_product<unsigned int>("other_num", 100 + i - 1);
+        driver.yield(store);
       }
-      if (i_ < max_ + 1) {
-        auto store = product_store::base()->make_child(i_, "event");
-        store->add_product<unsigned int>("num", i_ - 1);
-        store->add_product<unsigned int>("other_num", 100 + i_ - 1);
-        ++i_;
-        return store;
-      }
-      return nullptr;
     }
 
   private:
     unsigned const max_;
-    unsigned i_{};
   };
 
   constexpr bool evens_only(unsigned int const value) { return value % 2u == 0u; }
@@ -88,7 +84,7 @@ namespace {
 
 TEST_CASE("Two predicates", "[filtering]")
 {
-  framework_graph g{[src = source{10u}]() mutable { return src.next(); }};
+  framework_graph g{source{10u}};
   g.with(evens_only, concurrency::unlimited).evaluate("num").for_each("event");
   g.with(odds_only, concurrency::unlimited).evaluate("num").for_each("event");
   g.make<sum_numbers>(20u)
@@ -107,7 +103,7 @@ TEST_CASE("Two predicates", "[filtering]")
 
 TEST_CASE("Two predicates in series", "[filtering]")
 {
-  framework_graph g{[src = source{10u}]() mutable { return src.next(); }};
+  framework_graph g{source{10u}};
   g.with(evens_only, concurrency::unlimited).evaluate("num");
   g.with(odds_only, concurrency::unlimited).when("evens_only").evaluate("num");
   g.make<sum_numbers>(0u)
@@ -120,7 +116,7 @@ TEST_CASE("Two predicates in series", "[filtering]")
 
 TEST_CASE("Two predicates in parallel", "[filtering]")
 {
-  framework_graph g{[src = source{10u}]() mutable { return src.next(); }};
+  framework_graph g{source{10u}};
   g.with(evens_only, concurrency::unlimited).evaluate("num");
   g.with(odds_only, concurrency::unlimited).evaluate("num");
   g.make<sum_numbers>(0u)
@@ -142,7 +138,7 @@ TEST_CASE("Three predicates in parallel", "[filtering]")
                                         {.name = "exclude_6_to_7", .begin = 6, .end = 7},
                                         {.name = "exclude_gt_8", .begin = 8, .end = -1u}};
 
-  framework_graph g{[src = source{10u}]() mutable { return src.next(); }};
+  framework_graph g{source{10u}};
   for (auto const& [name, b, e] : configs) {
     g.make<not_in_range>(b, e)
       .with(name, &not_in_range::eval, concurrency::unlimited)
@@ -162,7 +158,7 @@ TEST_CASE("Three predicates in parallel", "[filtering]")
 
 TEST_CASE("Two predicates in parallel (each with multiple arguments)", "[filtering]")
 {
-  framework_graph g{[src = source{10u}]() mutable { return src.next(); }};
+  framework_graph g{source{10u}};
   g.with(evens_only, concurrency::unlimited).evaluate("num");
   g.with(odds_only, concurrency::unlimited).evaluate("num");
   g.make<check_multiple_numbers>(5 * 100)

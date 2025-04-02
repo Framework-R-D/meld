@@ -53,14 +53,7 @@ namespace {
 
 TEST_CASE("Testing families", "[data model]")
 {
-  framework_driver drive{levels_to_process};
-  framework_graph g{[&drive](cached_product_stores&) mutable -> product_store_ptr {
-                      if (auto next = drive()) {
-                        return *next;
-                      }
-                      return nullptr;
-                    },
-                    2};
+  framework_graph g{levels_to_process, 2};
   g.with("se", check_two_ids).observe("id"_in("subrun"), "id").for_each("event");
   g.with("rs", check_two_ids).observe("id"_in("run"), "id").for_each("subrun");
   g.with("rse", check_three_ids).observe("id"_in("run"), "id"_in("subrun"), "id").for_each("event");

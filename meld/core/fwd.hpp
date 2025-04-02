@@ -4,7 +4,6 @@
 #include <memory>
 
 namespace meld {
-  class cached_product_stores;
   class component;
   class declared_output;
   class end_of_message;

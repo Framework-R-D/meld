@@ -96,13 +96,7 @@ TEST_CASE("Splitting the processing", "[graph]")
     }
   };
 
-  framework_driver<product_store_ptr> drive{levels_to_process};
-  framework_graph g{[&drive](cached_product_stores&) mutable -> product_store_ptr {
-    if (auto next = drive()) {
-      return *next;
-    }
-    return nullptr;
-  }};
+  framework_graph g{levels_to_process};
 
   g.with<iota>(&iota::predicate, &iota::unfold, concurrency::unlimited)
     .unfold("max_number")
