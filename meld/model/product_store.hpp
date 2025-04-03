@@ -56,7 +56,7 @@ namespace meld {
     void add_product(std::string const& key, T&& t);
 
     template <typename T>
-    void add_product(std::string const& key, std::shared_ptr<product<T>>&& t);
+    void add_product(std::string const& key, std::unique_ptr<product<T>>&& t);
 
   private:
     explicit product_store(product_store_const_ptr parent = nullptr,
@@ -113,11 +113,11 @@ namespace meld {
   template <typename T>
   void product_store::add_product(std::string const& key, T&& t)
   {
-    add_product(key, std::make_shared<product<std::remove_cvref_t<T>>>(std::forward<T>(t)));
+    add_product(key, std::make_unique<product<std::remove_cvref_t<T>>>(std::forward<T>(t)));
   }
 
   template <typename T>
-  void product_store::add_product(std::string const& key, std::shared_ptr<product<T>>&& t)
+  void product_store::add_product(std::string const& key, std::unique_ptr<product<T>>&& t)
   {
     products_.add(key, std::move(t));
   }
