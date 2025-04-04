@@ -49,8 +49,9 @@ namespace {
     }
     auto initial_value() const { return begin_; }
     bool predicate(numbers_t::const_iterator it) const { return it != end_; }
-    auto unfold(numbers_t::const_iterator it) const
+    auto unfold(numbers_t::const_iterator it, level_id const& lid) const
     {
+      spdlog::info("Unfolding into {}", lid.to_string());
       auto num = *it;
       return std::make_pair(++it, num);
     };

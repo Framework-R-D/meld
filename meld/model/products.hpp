@@ -37,7 +37,7 @@ namespace meld {
   };
 
   class products {
-    using collection_t = std::unordered_map<std::string, std::shared_ptr<product_base>>;
+    using collection_t = std::unordered_map<std::string, std::unique_ptr<product_base>>;
 
   public:
     using const_iterator = collection_t::const_iterator;
@@ -45,11 +45,11 @@ namespace meld {
     template <typename T>
     void add(std::string const& product_name, T&& t)
     {
-      add(product_name, std::make_shared<product<std::remove_cvref_t<T>>>(std::forward<T>(t)));
+      add(product_name, std::make_unique<product<std::remove_cvref_t<T>>>(std::forward<T>(t)));
     }
 
     template <typename T>
-    void add(std::string const& product_name, std::shared_ptr<product<T>>&& t)
+    void add(std::string const& product_name, std::unique_ptr<product<T>>&& t)
     {
       products_.emplace(product_name, std::move(t));
     }
