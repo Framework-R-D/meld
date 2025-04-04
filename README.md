@@ -28,13 +28,14 @@ To build Meld using Fermilab's Spack bootstrap script and MPD extension, follow 
 
 1. Set up your Spack installation (once per machine)
 
-On Linux, you can install and configure the right version of Spack and assocaited tools using our bootstrap script.
+On Linux, you can install and configure the right version of Spack and associated tools using our bootstrap script.
 
 ```console
-$ cd <some scratch area>
-$ wget https://github.com/FNALssi/fermi-spack-tools/raw/refs/heads/fnal-develop/bin/bootstrap
-$ bash bootstrap $PWD/spack-fnal
-$ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
+# export TOP_DIR=/path/to/workspace
+cd ${TOP_DIR}
+wget https://github.com/FNALssi/fermi-spack-tools/raw/refs/heads/fnal-develop/bin/bootstrap
+bash bootstrap ${PWD}/spack-fnal
+source ${PWD}/spack-fnal/share/spack/setup-env.sh
 ```
 
 The `bootstrap` script does not work on macOS.
@@ -43,12 +44,13 @@ Note that if you have a previous installation of spack, you may have a directory
 These instructions have only been tested with a fresh installation, meaning there is no such directory.
 
 ```console
-$ cd <some scratch area>
-$ git clone -b fnal_develop git@github.com:FNALssi/spack.git spack-fnal  # name to match the instructions above
-$ git clone -b develop git@github.com:FNALssi/fnal_art.git
-$ git clone git@github.com:FNALssi/spack-mpd.git
-$ source spack/share/spack/setup-env.sh
-$ spack repo add $PWD/fnal_art   # Fermilab's Spack recipes
+# export TOP_DIR=/path/to/workspace
+cd ${TOP_DIR}
+git clone -b fnal_develop git@github.com:FNALssi/spack.git spack-fnal  # named to match the instructions above
+git clone -b develop git@github.com:FNALssi/fnal_art.git
+git clone git@github.com:FNALssi/spack-mpd.git
+source ${PWD}/spack-fnal/share/spack/setup-env.sh
+spack repo add $PWD/fnal_art   # Fermilab's Spack recipes
 ```
 Then you need to edit the Spack configuration using `spack config --scope site edit config`.
 Add the following to your configuration:
@@ -64,7 +66,7 @@ config:
    If that is not the case, repeat the `source` of the `setup-env.sh` file.
 
 ```console
-$ spack mpd init
+spack mpd init
 ```
 
 3. Establish compilers
@@ -79,22 +81,23 @@ This will find, and then report, what compilers you have available.
 3. Create a new MPD project
 
 ```console
-$ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
-$ spack mpd new-project --name meld-devel -T <some/path/to/>meld-devel cxxstd=20 %gcc@11
-$ spack mpd clone https://github.com/Framework-R-D/meld.git
-$ spack mpd refresh
-$ spack mpd build -j12
-$ spack mpd test -j12
+# export TOP_DIR=/path/to/workspace
+source ${TOP_DIR}/spack-fnal/share/spack/setup-env.sh
+spack mpd new-project --name meld-devel -T ${TOP_DIR}/meld-devel cxxstd=20 %gcc@11
+spack mpd clone https://github.com/Framework-R-D/meld.git
+spack mpd refresh
+spack mpd build -j12
+spack mpd test -j12
 ```
 
 4. Work on an existing MPD project from a new shell
 
 ```console
-$ source <some scratch area/>spack-fnal/share/spack/setup-env.sh
-$ spack mpd select meld-devel
-$ spack mpd build -j12
-$ ...
-$ spack mpd test -j12
+export TOP_DIR=/path/to/workspace
+source ${TOP_DIR}/spack-fnal/share/spack/setup-env.sh
+spack mpd select meld-devel
+spack mpd build -j12
+spack mpd test -j12
 ```
 
 ## Additional notes
