@@ -1,6 +1,5 @@
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/product_store.hpp"
-#include "test/products_for_output.hpp"
 
 using namespace meld;
 

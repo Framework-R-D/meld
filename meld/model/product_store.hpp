@@ -26,7 +26,7 @@ namespace meld {
     auto end() const noexcept { return products_.end(); }
 
     std::string const& level_name() const noexcept;
-    std::string_view source() const noexcept;
+    std::string_view source() const noexcept; // FIXME: Think carefully of using std::string_view
     product_store_const_ptr parent(std::string const& level_name) const noexcept;
     product_store_const_ptr parent() const noexcept;
     product_store_ptr make_flush() const;
