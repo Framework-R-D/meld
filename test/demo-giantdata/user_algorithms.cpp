@@ -5,16 +5,21 @@
 
 // This function is used to transform an input Waveforms object into an
 // output Waveforms object. The output is a clamped version of the input.
-demo::Waveforms demo::clampWaveforms(demo::Waveforms const& input)
+demo::Waveforms demo::clampWaveforms(demo::Waveforms const& input,
+                                     std::size_t run_id,
+                                     std::size_t subrun_id,
+                                     std::size_t spill_id,
+                                     std::size_t apa_id)
 {
-  demo::log_record("start_clamp", input.spill_id, input.apa_id, &input, input.size(), nullptr);
+  demo::log_record(
+    "start_clamp", run_id, subrun_id, spill_id, apa_id, &input, input.size(), nullptr);
   demo::Waveforms result(input);
   for (demo::Waveform& wf : result.waveforms) {
     for (double& x : wf.samples) {
       x = std::clamp(x, -10.0, 10.0);
     }
   }
-  demo::log_record("end_clamp", input.spill_id, input.apa_id, &input, input.size(), &result);
+  demo::log_record("end_clamp", run_id, subrun_id, spill_id, apa_id, &input, input.size(), &result);
   return result;
 }
 
