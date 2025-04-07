@@ -1,4 +1,3 @@
-#include "meld/core/cached_product_stores.hpp"
 #include "meld/core/framework_graph.hpp"
 #include "meld/model/level_id.hpp"
 #include "meld/model/product_store.hpp"
@@ -27,23 +26,23 @@ int main(int argc, char* argv[])
   std::vector<std::string> const args(argv + 1, argv + argc);
   std::size_t const n_runs = [&args]() {
     if (args.size() > 1) {
-      return std::stoull(args[0]);
+      return std::stoul(args[0]);
     }
-    return 1ull;
+    return 1ul;
   }();
 
   std::size_t const n_subruns = [&args]() {
     if (args.size() > 2) {
-      return std::stoull(args[1]);
+      return std::stoul(args[1]);
     }
-    return 1ull;
+    return 1ul;
   }();
 
   std::size_t const n_spills = [&args]() {
     if (args.size() > 2) {
-      return std::stoull(args[1]);
+      return std::stoul(args[1]);
     }
-    return 1ull;
+    return 1ul;
   }();
 
   int const apas_per_spill = [&args]() {
@@ -78,18 +77,21 @@ int main(int argc, char* argv[])
 
           // Put the WGI product into the job, so that our CHOF can find it.
           auto next_size = wires_per_spill;
-          demo::log_record("add_job_wgi",
+          demo::log_record("add_wgi",
                            run_store->id()->number(),
                            subrun_store->id()->number(),
                            spill_store->id()->number(),
-                           0,
+                           -1,
                            &spill_store,
                            next_size,
                            nullptr);
           // NOTE: the only reason that we are able to put the spill id into the WGI object
           // is because we have access to the store
-          spill_store->add_product<demo::WGI>(
-            "wgen", demo::WGI(next_size, static_cast<int>(spill_store->id()->number())));
+          spill_store->add_product<demo::WGI>("wgen",
+                                              demo::WGI(next_size,
+                                                        run_store->id()->number(),
+                                                        subrun_store->id()->number(),
+                                                        spill_store->id()->number()));
 
           driver.yield(spill_store);
         }
@@ -100,7 +102,7 @@ int main(int argc, char* argv[])
   // Create the graph. The source tells us what data we will process.
   // We introduce a new scope to make sure the graph is destroyed before we
   // write out the logged records.
-  demo::log_record("create_graph", 0, 0, 0, 0, nullptr, 0, nullptr);
+  demo::log_record("create_graph");
   {
     framework_graph g{source};
 
@@ -109,7 +111,7 @@ int main(int argc, char* argv[])
 
     // Add the unfold node to the graph. We do not yet know how to provide the chunksize
     // to the constructor of the WaveformGenerator, so we will use the default value.
-    demo::log_record("add_unfold", 0, 0, 0, 0, nullptr, 0, nullptr);
+    demo::log_record("add_unfold");
     auto const chunksize = 256LL; // this could be read from a configuration file
 
     g.with<demo::WaveformGenerator>(
@@ -124,38 +126,49 @@ int main(int argc, char* argv[])
       ;
 
     // Add the transform node to the graph.
-    demo::log_record("add_transform", 0, 0, 0, 0, nullptr, 0, nullptr);
-    g.with(
-       [](meld::handle<demo::Waveforms> hwf) {
-         auto apa_id = hwf.level_id().number();
-         auto spill = hwf.level_id().parent()->number();
-         auto subrun_id = hwf.level_id().parent()->parent()->number();
-         auto run_id = hwf.level_id().parent()->parent()->parent()->number();
-         return demo::clampWaveforms(*hwf, run_id, subrun_id, spill, apa_id);
-       },
-       concurrency::unlimited)
+    demo::log_record("add_transform");
+    auto wrapped_user_function = [](meld::handle<demo::Waveforms> hwf) {
+      auto apa_id = hwf.level_id().number();
+      auto spill_id = hwf.level_id().parent()->number();
+      auto subrun_id = hwf.level_id().parent()->parent()->number();
+      auto run_id = hwf.level_id().parent()->parent()->parent()->number();
+      return demo::clampWaveforms(*hwf, run_id, subrun_id, spill_id, apa_id);
+    };
+
+    // Because we are using a closure here, we have to provide a node name;
+    // the framework is unable to deduce the name of the "function".
+    g.with("clamp_node", wrapped_user_function, concurrency::unlimited)
       .transform("waves_in_apa") // the type of node to create, and the label of the input
       .for_each("APA")
       .to("clamped_waves") // label the chunks we create as "clamped_waves"
       ;
 
     // Add the fold node to the graph.
-    demo::log_record("add_fold", 0, 0, 0, 0, nullptr, 0, nullptr);
-    g.with("accum_for_spill", demo::accumulateSCW, concurrency::unlimited)
+    demo::log_record("add_fold");
+    g.with(
+       "accum_for_spill",
+       [](demo::SummedClampedWaveforms& scw, meld::handle<demo::Waveforms> hwf) {
+         auto apa_id = hwf.level_id().number();
+         auto spill_id = hwf.level_id().parent()->number();
+         auto subrun_id = hwf.level_id().parent()->parent()->number();
+         auto run_id = hwf.level_id().parent()->parent()->parent()->number();
+         demo::accumulateSCW(scw, *hwf, run_id, subrun_id, spill_id, apa_id);
+       },
+       concurrency::unlimited)
       .fold("clamped_waves"_in("APA"))
       .to("summed_waveforms")
       .partitioned_by("spill") // partition the output by the spill
       ;
 
-    demo::log_record("add_output", 0, 0, 0, 0, nullptr, 0, nullptr);
+    demo::log_record("add_output");
     g.make<test::products_for_output>().output_with(&test::products_for_output::save,
                                                     concurrency::serial);
 
     // Execute the graph.
-    demo::log_record("execute_graph", 0, 0, 0, 0, nullptr, 0, nullptr);
+    demo::log_record("execute_graph");
     g.execute("unfold_transform_fold");
-    demo::log_record("end_graph", 0, 0, 0, 0, nullptr, 0, nullptr);
+    demo::log_record("end_graph");
   }
-  demo::log_record("graph_destroyed", 0, 0, 0, 0, nullptr, 0, nullptr);
+  demo::log_record("graph_destroyed");
   demo::write_log("unfold_transform_fold.tsv");
 }

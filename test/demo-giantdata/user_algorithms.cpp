@@ -24,14 +24,21 @@ demo::Waveforms demo::clampWaveforms(demo::Waveforms const& input,
 }
 
 // This is the fold operator that will accumulate a SummedClampedWaveforms object.
-void demo::accumulateSCW(demo::SummedClampedWaveforms& scw, demo::Waveforms const& wf)
+void demo::accumulateSCW(demo::SummedClampedWaveforms& accumulator,
+                         demo::Waveforms const& wf,
+                         std::size_t run_id,
+                         std::size_t subrun_id,
+                         std::size_t spill_id,
+                         std::size_t apa_id)
 {
-  demo::log_record("start_accSCW", wf.spill_id, wf.apa_id, &scw, wf.size(), &wf);
-  scw.size += wf.size();
+  // This is the fold operator that will accumulate a SummedClampedWaveforms object.
+  demo::log_record(
+    "start_accSCW", run_id, subrun_id, spill_id, apa_id, &accumulator, wf.size(), &wf);
+  accumulator.size += wf.size();
   for (auto const& w : wf.waveforms) {
     for (double x : w.samples) {
-      scw.sum += x;
+      accumulator.sum += x;
     }
   }
-  demo::log_record("end_accSCW", wf.spill_id, wf.apa_id, &scw, wf.size(), &wf);
+  demo::log_record("end_accSCW", run_id, subrun_id, spill_id, apa_id, &accumulator, wf.size(), &wf);
 }

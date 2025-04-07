@@ -8,7 +8,10 @@
 #include <fstream>
 #include <iomanip>
 
+static_assert(static_cast<int>(-1ULL) == -1, "static_cast<int>(-1ULL) is not -1");
+
 namespace demo {
+  inline int constexpr convert_to_int(std::size_t value) { return static_cast<int>(value); }
 
   std::size_t const EVENT_NAME_SIZE = 16;
   struct record {
@@ -20,10 +23,10 @@ namespace demo {
            void const* active,
            std::size_t data,
            void const* orig) :
-      run_id(run_id),
-      subrun_id(subrun_id),
-      spill_id(spill_id),
-      apa_id(apa_id),
+      run_id(convert_to_int(run_id)),
+      subrun_id(convert_to_int(subrun_id)),
+      spill_id(convert_to_int(spill_id)),
+      apa_id(convert_to_int(apa_id)),
       active(active),
       data(data),
       orig(orig),
@@ -38,12 +41,12 @@ namespace demo {
       this->event[EVENT_NAME_SIZE - 1] = '\0'; // ensure null-termination
     }
 
-    std::size_t run_id;
-    std::size_t subrun_id;
-    std::size_t spill_id;
-    std::size_t apa_id;
+    int run_id;
+    int subrun_id;
+    int spill_id;
+    int apa_id;
     void const* active;
-    std::size_t data;
+    int data;
     void const* orig;
     double timestamp;
     char event[EVENT_NAME_SIZE];
@@ -63,24 +66,21 @@ namespace demo {
   inline oneapi::tbb::concurrent_queue<record> global_queue;
 
   inline void log_record(char const* event,
-                         std::size_t run_id,
-                         std::size_t subrun_id,
-                         std::size_t spill_id,
-                         std::size_t apa_id,
-                         void const* active,
-                         std::size_t data,
-                         void const* orig)
+                         std::size_t run_id = -1ULL,
+                         std::size_t subrun_id = -1ULL,
+                         std::size_t spill_id = -1ULL,
+                         std::size_t apa_id = -1ULL,
+                         void const* active = nullptr,
+                         std::size_t data = 0,
+                         void const* orig = nullptr)
   {
     record r(event, run_id, subrun_id, spill_id, apa_id, active, data, orig);
-    //memcpy(r.event, event, EVENT_NAME_SIZE);
-
     global_queue.push(r);
   }
-
   inline void write_log(std::string const& filename)
   {
     std::ofstream log_file(filename, std::ios_base::out | std::ios_base::trunc);
-    log_file << "time\tthread\tevent\tspill\tapa\tactive\tdata\torig\n";
+    log_file << "time\tthread\tevent\trun\tsubrun\tspill\tapa\tactive\tdata\torig\n";
     for (auto it = global_queue.unsafe_cbegin(), e = global_queue.unsafe_cend(); it != e; ++it) {
       log_file << *it << '\n';
     }

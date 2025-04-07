@@ -14,12 +14,14 @@ namespace demo {
 
   struct Waveforms {
     std::vector<Waveform> waveforms;
+    int run_id;
+    int subrun_id;
     int spill_id;
     int apa_id;
 
     std::size_t size() const;
 
-    Waveforms(std::size_t n, double val, int spill_id, int apa_id);
+    Waveforms(std::size_t n, double val, int run_id, int subrun_id, int spill_id, int apa_id);
     Waveforms(Waveforms const& other);
     Waveforms(Waveforms&& other);
 
