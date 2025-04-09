@@ -6,8 +6,11 @@
 #include "tbb/task_group.h"
 
 #include <atomic>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include <optional>
+#include <thread>
 
 namespace meld {
 
@@ -22,55 +25,43 @@ namespace meld {
     }
     async_driver(void (*ft)(async_driver<RT>&)) : driver_{ft} {}
 
-    ~async_driver() { group_.wait(); }
+    ~async_driver() { thread_.join(); }
 
     std::optional<RT> operator()()
     {
       if (gear_ == states::off) {
-        group_.run([&] {
+        thread_ = std::thread{[this] {
           driver_(*this);
           gear_ = states::park;
-          if (call_sp_ != tbb::task::suspend_point{}) {
-            tbb::task::resume(call_sp_.exchange({}));
-          }
-        });
+          cv_.notify_one();
+        }};
         gear_ = states::drive;
       }
-
-      tbb::task::suspend([this](tbb::task::suspend_point call_sp) {
-        call_sp_ = call_sp;
-        if (yield_sp_ != tbb::task::suspend_point{}) {
-          tbb::task::resume(yield_sp_.exchange({}));
-        }
-      });
-
-      if (gear_ == states::park) {
-        return std::nullopt;
+      else {
+        cv_.notify_one();
       }
 
+      std::unique_lock lock{mutex_};
+      cv_.wait(lock, [&] { return current_.has_value() or gear_ == states::park; });
       return std::exchange(current_, std::nullopt);
     }
 
     void yield(RT rt)
     {
-      tbb::task::suspend([this, current = std::move(rt)](tbb::task::suspend_point yield_sp) {
-        yield_sp_ = yield_sp;
-        current_ = std::make_optional(std::move(current));
-        if (call_sp_ != tbb::task::suspend_point{}) {
-          tbb::task::resume(call_sp_.exchange({}));
-        }
-      });
+      std::unique_lock lock{mutex_};
+      current_ = std::make_optional(std::move(rt));
+      cv_.notify_one();
+      cv_.wait(lock);
     }
 
   private:
     std::function<void(async_driver&)> driver_;
     std::optional<RT> current_;
     std::atomic<states> gear_ = states::off;
-    tbb::task_group group_;
-    std::atomic<tbb::task::suspend_point> yield_sp_;
-    std::atomic<tbb::task::suspend_point> call_sp_;
+    std::thread thread_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
   };
-
 }
 
 #endif // meld_utilities_async_driver_hpp
