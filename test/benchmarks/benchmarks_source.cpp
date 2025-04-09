@@ -22,7 +22,7 @@ namespace test {
       driver.yield(job_store);
 
       for (std::size_t i : std::views::iota(0u, max_)) {
-        if (i % (max_ / 10) == 0) {
+        if (max_ > 10 and i % (max_ / 10) == 0) {
           spdlog::debug("Reached {} events", i);
         }
 
