@@ -1,5 +1,5 @@
-#ifndef DEMO_LOG_RECORD_H
-#define DEMO_LOG_RECORD_H
+#ifndef test_demo_giantdata_log_record_hpp
+#define test_demo_giantdata_log_record_hpp
 
 #include "oneapi/tbb/concurrent_queue.h"
 #include "oneapi/tbb/task_arena.h"
@@ -87,4 +87,4 @@ namespace demo {
   }
 } // namespace demo
 
-#endif
+#endif // test_demo_giantdata_log_record_hpp

@@ -1,5 +1,5 @@
-#ifndef MELD_TEST_USER_ALGORITHMS_HPP
-#define MELD_TEST_USER_ALGORITHMS_HPP
+#ifndef test_demo_giantdata_user_algorithms_hpp
+#define test_demo_giantdata_user_algorithms_hpp
 
 #include "summed_clamped_waveforms.hpp"
 #include "waveforms.hpp"
@@ -24,4 +24,4 @@ namespace demo {
 
 } // namespace demo
 
-#endif
+#endif // test_demo_giantdata_user_algorithms_hpp

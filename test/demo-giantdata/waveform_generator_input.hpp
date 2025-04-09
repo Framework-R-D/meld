@@ -1,5 +1,5 @@
-#ifndef SRC_MELD_TEST_WAVEFORM_GENERATOR_INPUT_HPP
-#define SRC_MELD_TEST_WAVEFORM_GENERATOR_INPUT_HPP
+#ifndef test_demo_giantdata_waveform_generator_input_hpp
+#define test_demo_giantdata_waveform_generator_input_hpp
 
 #include <cstddef>
 
@@ -29,4 +29,4 @@ namespace demo {
   inline std::size_t mysize(WaveformGeneratorInput const& w) { return sizeof(w); }
 } // namespace demo
 
-#endif
+#endif // test_demo_giantdata_waveform_generator_input_hpp

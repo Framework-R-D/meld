@@ -1,5 +1,5 @@
-#ifndef MELD_TEST_DEMO_GIANTDATA_WAVEFORM_GENERATOR_HPP
-#define MELD_TEST_DEMO_GIANTDATA_WAVEFORM_GENERATOR_HPP
+#ifndef test_demo_giantdata_waveform_generator_hpp
+#define test_demo_giantdata_waveform_generator_hpp
 
 #include "log_record.hpp"
 #include "waveform_generator_input.hpp"
@@ -40,4 +40,4 @@ namespace demo {
     int spill_id_;        // the id of the spill this object will process
   }; // class WaveformGenerator
 } // namespace demo
-#endif // MELD_TEST_DEMO_GIANTDATA_WAVEFORM_GENERATOR_HPP
+#endif // test_demo_giantdata_waveform_generator_hpp

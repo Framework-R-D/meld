@@ -1,6 +1,6 @@
 // waveforms.hpp
-#ifndef SRC_MELD_TEST_WAVEFORMS_HPP
-#define SRC_MELD_TEST_WAVEFORMS_HPP
+#ifndef test_demo_giantdata_waveforms_hpp
+#define test_demo_giantdata_waveforms_hpp
 
 #include <array>
 #include <vector>
@@ -33,4 +33,4 @@ namespace demo {
   };
 
 } // namespace demo
-#endif // SRC_MELD_TEST_WAVEFORMS_HPP
+#endif // test_demo_giantdata_waveforms_hpp
