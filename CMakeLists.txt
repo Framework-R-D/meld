@@ -7,8 +7,8 @@ option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-#set(CMAKE_BUILD_TYPE "RelWithDebInfo")
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+# set(CMAKE_BUILD_TYPE "Debug")
 add_compile_options(-Wall -Werror -Wunused -Wunused-parameter -pedantic)
 
 # GCC 14.1 issues many false positives re. array-bounds and stringop-overflow
@@ -60,8 +60,6 @@ if(ENABLE_ASAN)
         message(FATAL_ERROR "AddressSanitizer is not supported with ${CMAKE_CXX_COMPILER_ID}")
     endif()
 endif()
-
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
 add_subdirectory(meld)
 
